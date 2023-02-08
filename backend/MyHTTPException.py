@@ -1,5 +1,4 @@
-from fastapi import HTTPException, Request
-from fastapi.responses import JSONResponse
+from fastapi import HTTPException
 
 
 class MyHTTPException(HTTPException):

@@ -1,30 +1,33 @@
-from icalendar import Calendar
-from functools import cache
 import csv
-import requests
 import re
+from functools import cache
 
-# Format Properties:
-# TISS-Details Link                                     TissDetail
-# TISS-Calender original Description                    TissCalDesc
+from icalendar.cal import Event
+from jinja2 import BaseLoader, Environment
 
-# Room Name (Ausgeschriebener Raum Name)                RoomName
-# Room TISS-Raumbelegung Link                           RoomTiss
-# Room TUW-Maps Link                                    RoomTuwMap
-# Room Gebäude Addresse (z.B. "Getreidemarkt 9")        RoomBuildingAddress
 
-# StartDate formated as (dd-MM-YYYY)                    StartDate
-# StartTime formated as (hh:mm)                         StartTime
-# EndDate formated as (dd-MM-YYYY)                      EndDate
-# EndTime formated as (hh:mm)                           EndTime
+@cache
+def read_rooms(file="resources\TU-Rooms.csv"):
+    # TODO: Maybe move this also to a database
+    with open(file, "r", encoding="UTF-8") as csvfile:
+        reader = csv.reader(csvfile, delimiter=";")
+        return [room for room in reader]
 
-# LVA Name (z.B. "Algebra und Diskrete Mathematik für Informatik und Wirtschaftsinformatik")    LvaName
-# LVA Typ kurz (z.B. "VO", "UE", "VU", ...)                                                     LvaTypeShort
-# LVA Typ lang (z.B. "Vorlesung", "Übung", "Vorlesung mit Übung")                               LvaTypeLong
-# LVA ID (z.B. "104.265")                                                                       LvaId
 
-# TODO:
-# Default Template (inserts the default template)
+def get_room_data(room_name=None):
+    if room_name == "":
+        return None
+
+    for room in read_rooms():
+        if room_name == room[0]:
+            return [
+                room[0],  # Room Name
+                room[8],  # Tiss Link
+                f"https://tuw-maps.tuwien.ac.at/?q={room[7]}#map",  # TU Wien Maps Link
+                room[6].split(",")[0],  # Real World Location
+            ]
+    else:
+        return None
 
 
 class Lva:
@@ -44,7 +47,7 @@ class Lva:
         "RoomTuwMap",
         "RoomBuildingAddress",
     ]
-    
+
     LVA_TYPE_MAP = {
         "VO": "Vorlesung",
         "VU": "Vorlesung mit Übung",
@@ -96,28 +99,25 @@ class Lva:
         self.ical_event["location"] = self._apply_format(format)
 
     def _apply_format(self, format):
-        pattern = re.compile("\{\{([a-zA-Z]+)\}\}")
-        res = ""
-        lastIndex = 0
-        
-        for x in pattern.finditer(format):
-            if x.groups()[0] not in self.PROPERTIES_TEMPLATE:
-                continue
-            
-            res += format[lastIndex:x.span()[0]]
-            res += self.properties[x.groups()[0]]
+        rtemplate = Environment(loader=BaseLoader()).from_string(format)
+        return rtemplate.render(**self.properties)
 
-            lastIndex = x.span()[1]
+    @staticmethod
+    def is_lva(ical_event: Event) -> bool:
+        pattern = re.compile("^(.{3}\..{3}) (.{2}) (.*)$")
+        return "summary" in ical_event and pattern.match(ical_event["summary"])
 
-        return res + format[lastIndex:]
-
+    @staticmethod
+    def is_lva_str(event_summary: str) -> bool:
+        pattern = re.compile("^(.{3}\..{3}) (.{2}) (.*)$")
+        return pattern.match(event_summary) is not None
 
     @classmethod
     def lva_from_ical_event(cls, ical_event):
         pattern = re.compile("^(.{3}\..{3}) (.{2}) (.*)$")
-        
+
         # if not LVA
-        if 'summary' not in ical_event or not pattern.match(ical_event["summary"]):
+        if not cls.is_lva(ical_event):
             return None
 
         # if LVA
@@ -125,23 +125,23 @@ class Lva:
         lva_id, lva_type_short, lva_name = match.groups()
         lva_type_long = cls.LVA_TYPE_MAP[lva_type_short]
 
-        start_date, start_time = ical_event['dtstart'].dt.strftime("%d.%m.%Y %H:%M").split(" ")
-        end_date, end_time = ical_event['dtend'].dt.strftime("%d.%m.%Y %H:%M").split(" ")
+        start_date, start_time = ical_event["dtstart"].dt.strftime("%d.%m.%Y %H:%M").split(" ")
+        end_date, end_time = ical_event["dtend"].dt.strftime("%d.%m.%Y %H:%M").split(" ")
 
         tiss_detail = f'https://tiss.tuwien.ac.at/course/event/courseDetails.xhtml?foreignId=2022W-{lva_id.replace(".", "")}'
         tiss_cal_desc = ical_event["description"]
 
-        room_data = get_room_data(ical_event.get('location', None))
+        room_data = get_room_data(ical_event.get("location", None))
         if room_data is not None:
             room_name = room_data[0]
             room_tiss = room_data[1]
             room_tuw_map = room_data[2]
             room_building_address = room_data[3]
-        elif 'location' in ical_event:
-            room_name = ical_event['location']
-            room_tiss = ical_event['location']
-            room_tuw_map = ical_event['location']
-            room_building_address = ical_event['location']
+        elif "location" in ical_event:
+            room_name = ical_event["location"]
+            room_tiss = ical_event["location"]
+            room_tuw_map = ical_event["location"]
+            room_building_address = ical_event["location"]
         else:
             room_name = None
             room_tiss = None
@@ -166,31 +166,3 @@ class Lva:
         }
 
         return cls(props, ical_event)
-
-
-def get_cal_from_url(url):
-    req = requests.get(url)
-    if req.status_code == 200:
-        return Calendar.from_ical(req.content)
-
-
-@cache
-def read_rooms(file="resources\TU-Rooms.csv"):
-    with open(file, "r", encoding="UTF-8") as csvfile:
-        reader = csv.reader(csvfile, delimiter=";")
-        return [room for room in reader]
-
-
-def get_room_data(room_name=None):
-    if room_name == '': return None
-
-    for room in read_rooms():
-        if room_name == room[0]:
-            return [
-                room[0], # Room Name
-                room[8], # Tiss Link
-                f'https://tuw-maps.tuwien.ac.at/?q={room[7]}#map', # TU Wien Maps Link
-                room[6].split(",")[0], # Real World Location
-            ]
-    else:
-        return None

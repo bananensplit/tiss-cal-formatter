@@ -1,211 +1,170 @@
-import random
-import string
-from fastapi import FastAPI, Response, status, Cookie
-from fastapi.responses import StreamingResponse
-from pymongo import MongoClient
-from typing import Dict, Union, List
-from pydantic import BaseModel
+import logging
 from io import StringIO
-from calFormatter import get_cal_from_url, Lva
 
-# Caleder URL under which the ics file can be found
-TISS_CAL_URL = 'https://tiss.tuwien.ac.at/events/rest/calendar/personal?locale=de&token=XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
+from fastapi import Depends, FastAPI, HTTPException, Request, Response, Security
+from fastapi.responses import JSONResponse, StreamingResponse
+from fastapi.security.api_key import APIKeyCookie
 
-# Events that will be deleted
-UNWANTED_EVENTS = ('104.263 UE Algebra und Diskrete Mathematik für Informatik und Wirtschaftsinformatik')
+from models.ErrorResponse import ErrorResponse
+from models.TissCalModels import TissCalChangeRequest, TissCalCreateRequest, TissCalDB, TissCalResponse, TissCalSuccessDelete
+from models.UserModels import UserDB, UserLoginRequest, UserLogoutResponse, UserResponse
+from MyCalendar import MyCalendar
+from MyHTTPException import MyHTTPException
+from TissCalHandler import TissCalHandler
+from UserHandler import UserHandler
 
-# Events to prettify (if possible will change to nice description, nice location, etc)
-PRETTY_EVENTS = (
-    "104.265 VO Algebra und Diskrete Mathematik für Informatik und Wirtschaftsinformatik",
-    "104.263 UE Algebra und Diskrete Mathematik für Informatik und Wirtschaftsinformatik - P",
-    "192.134 VU Grundzüge digitaler Systeme",
-    "185.A91 VU Einführung in die Programmierung 1",
-    "187.B12 VU Denkweisen der Informatik",
-    "180.766 VU Orientierung Informatik und Wirtschaftsinformatik"
-)
-
-TOKEN = "ZW0awBfTOmpHN7oBmw8jlm5bbWsanT"
-
-DEFAULT_DESCRIPTION_FROMAT = """<b>{{LvaName}}</b>
-Typ: <b>{{LvaTypeShort}}</b> ({{LvaTypeLong}})
-Details: <b><a href="{{TissDetail}}">TISS</a></b>
-Raum: <b>{{RoomName}}</b>, <a href="{{RoomTiss}}">TISS</a>, <a href="{{RoomTuwMap}}">TU-Wien Maps</a>
-Full-Name: {{LvaId}} {{LvaTypeShort}} {{LvaName}}
-<br>
-Tiss Description:
-{{TissCalDesc}}"""
-
-DEFAULT_LOCATION_FROMAT = "{{RoomBuildingAddress}}"
-
-DEFAULT_SUMMARY_FROMAT = "{{LvaTypeShort}} {{LvaName}}"
+# Setup Logging ####
+logger = logging.getLogger("TissCal-API")
+logger.setLevel(logging.DEBUG)
+formatter = logging.Formatter(fmt="%(asctime)s %(levelname)-8s %(message)s", datefmt="%Y-%m-%d %H:%M:%S")
+ch = logging.StreamHandler()
+fh = logging.FileHandler("fastapi.log")
+ch.setFormatter(formatter)
+fh.setFormatter(formatter)
+logger.addHandler(ch)
+logger.addHandler(fh)
 
 
 app = FastAPI()
+user_handler = UserHandler(
+    logger=logger,
+    connection_string="mongodb://admin:adminadmin@10.0.0.150:8882/",
+    db_name="tisscal",
+    user_collection="users",
+    redis_host="10.0.0.150",
+    redis_port=8881,
+    redis_password=None,
+)
+tiss_cal_handler = TissCalHandler(
+    logger=logger,
+    connection_string="mongodb://admin:adminadmin@10.0.0.150:8882/",
+    db_name="tisscal",
+    tiss_cal_collection="calendars",
+    user_handler=user_handler,
+)
 
-test_data = {
-    'uid': 'associated User',
-    'tissCalUrl': "https://tiss.tuwien.ac.at/events/rest/calendar/personal?locale=de&token=6613677f-b201-48b1-a87f-239a163c0b05",
-    'unwantedEvents': ['104.263 UE Algebra und Diskrete Mathematik für Informatik und Wirtschaftsinformatik'],
-    'prettyEvents': {
-        "104.265 VO Algebra und Diskrete Mathematik für Informatik und Wirtschaftsinformatik": {},
-        "104.263 UE Algebra und Diskrete Mathematik für Informatik und Wirtschaftsinformatik - P": {},
-        "192.134 VU Grundzüge digitaler Systeme": {},
-        "185.A91 VU Einführung in die Programmierung 1": {},
-        "187.B12 VU Denkweisen der Informatik": {},
-        "180.766 VU Orientierung Informatik und Wirtschaftsinformatik": {},
-    },
-    'defaultSummaryFormat': '{{LvaTypeShort}} {{LvaName}}',
-    'defaultLocationFormat': '{{RoomBuildingAddress}}',
-    'defaultDescriptionFormat': """<b>{{LvaName}}</b>
-Typ: <b>{{LvaTypeShort}}</b> ({{LvaTypeLong}})
-Details: <b><a href="{{TissDetail}}">TISS</a></b>
-Raum: <b>{{RoomName}}</b>, <a href="{{RoomTiss}}">TISS</a>, <a href="{{RoomTuwMap}}">TU-Wien Maps</a>
-Full-Name: {{LvaId}} {{LvaTypeShort}} {{LvaName}}
-<br>
-Tiss Description:
-{{TissCalDesc}}""",
-    'calendarToken': 'ZW0awBfTOmpHN7oBmw8jlm5bbWsanT'
-}
-
-def generate_calendar(data):
-    cal = get_cal_from_url(data['tissCalUrl'])
-    
-    # Delete unwanted events
-    cal.subcomponents = [el for el in cal.subcomponents 
-        if el.get('summary', '') not in data['unwantedEvents']]
-    
-    # Polish known events and leave unknown events untouched
-    for event in cal.walk(name='VEVENT'):
-        if event['summary'] not in data['prettyEvents']:
-            continue
-
-        ev = Lva.lva_from_ical_event(event)
-        if ev is None:
-            continue
-
-        location_format = data['prettyEvents'][event['summary']].get('locationFormat', data['defaultLocationFormat'])
-        ev.set_location(location_format)
-
-        desc_format = data['prettyEvents'][event['summary']].get('descriptionFormat', data['defaultDescriptionFormat'])
-        ev.set_description(desc_format)
-
-        # Summary needs to be set last!!!
-        summary_format = data['prettyEvents'][event['summary']].get('summaryFormat', data['defaultSummaryFormat'])
-        ev.set_summary(summary_format)
-    
-    return cal.to_ical().decode('utf-8')
+api_key_cookie = APIKeyCookie(name="token", auto_error=False)
 
 
-def get_cal_data_by_token(token):
-    # TODO Client config more human :)
-    client = MongoClient("mongodb://root:rootPassword@192.168.0.100/")
-    collection = client.get_database('tisscal').get_collection('calendars')
-    res = collection.find_one({'calendarToken': token})
-    client.close()
-    return res
+# Exception handlers ####
+@app.exception_handler(MyHTTPException)
+def my_http_exception_handler(request: Request, exc: HTTPException):
+    return JSONResponse(status_code=exc.status_code, content=ErrorResponse(message=exc.detail).dict())
 
 
-def get_cal_data_by_uid(uid):
-    # TODO Client config more human :)
-    client = MongoClient("mongodb://root:rootPassword@192.168.0.100/")
-    collection = client.get_database('tisscal').get_collection('calendars')
-    res = collection.find_one({'uid': uid})
-    client.close()
-    return res
+# Authentication ####
+def verify_token(token: str = Security(api_key_cookie)) -> UserDB | None:
+    if not user_handler.check_login(token=token):
+        raise MyHTTPException(status_code=401, detail="Request not authenticated")
+    uid = user_handler.get_session(token=token)[1]
+    return user_handler.get_user_by_uid(uid)
 
 
-def generate_token(length):
-    characters = string.ascii_letters + string.digits
-    token = ''.join(random.choice(characters) for i in range(length))
-    return token
+# Events ####
+@app.on_event("startup")
+async def startup_event():
+    logger.warning("Starting up")
 
 
-class CalModelResponse(BaseModel):
-    tissCalUrl: str
-    unwantedEvents: List[str]
-    prettyEvents: Dict[str, Dict[str, str]]
-    defaultSummaryFormat: str
-    defaultLocationFormat: str
-    defaultDescriptionFormat: str
-    calToken: str
+@app.on_event("shutdown")
+async def shutdown_event():
+    user_handler.close()
+    logger.warning("Shuted down")
 
 
-class CalModelRequest(BaseModel):
-    tissCalUrl: str
-    unwantedEvents: List[str]
-    prettyEvents: Dict[str, Dict[str, str]]
-    defaultSummaryFormat: str
-    defaultLocationFormat: str
-    defaultDescriptionFormat: str
+# Endpoints ####
+@app.get("/tisscal/api/me", response_model=UserResponse, status_code=200)
+async def user_data_me(current_user: UserDB = Depends(verify_token)):
+    return current_user
 
 
-class LoginRequest(BaseModel):
-    username: str
-    password: str
+@app.post("/tisscal/api/login", response_model=UserResponse)
+async def login(user: UserLoginRequest, response: Response):
+    if not user_handler.get_user_by_username(user.username):
+        raise MyHTTPException(status_code=404, detail="User name or password incorrect")
 
-class LoginResponse(BaseModel):
-    loggedIn: bool
-    message: str
+    if not (token := user_handler.login(user.username, user.password)):
+        raise MyHTTPException(status_code=404, detail="User name or password incorrect")
 
-class UserResponse(BaseModel):
-    uid: str
-    username: str
-    usernameLower: str
-
-class UserCreateRequest(BaseModel):
-    username: str
-    password: str
-
-class UserCreateResponse(BaseModel):
-    uid: str
-    username: str
-
-
-@app.post("/tisscal/login", response_model=LoginResponse, status_code=status.HTTP_200_OK)
-async def login(user: LoginRequest):
-    
+    response.set_cookie(key="token", value=token, max_age=60 * 60)
     return {
-        "loggedIn": True,
-        "message": "you are successfully logged in :)"
+        "username": user.username,
     }
 
-@app.post("/tisscal/createUser", response_model=UserCreateResponse, status_code=status.HTTP_201_CREATED)
-async def login(user: UserCreateRequest):
+
+@app.get("/tisscal/api/logout", response_model=UserLogoutResponse, status_code=200)
+async def logout(response: Response, current_user: UserDB = Depends(verify_token)):
+    user_handler.logout(str(current_user.uid))
+    response.delete_cookie(key="token")
+    return {}
+
+
+@app.post("/tisscal/api/cal/create", response_model=TissCalResponse, status_code=200)
+async def create_cal(request: TissCalCreateRequest, current_user: UserDB = Depends(verify_token)):
+    cal = tiss_cal_handler.create_new_calendar(url=request.url, name=request.name, owner=str(current_user.uid))
+    if cal is None:
+        raise MyHTTPException(status_code=500, detail="Error creating calendar")
+    return TissCalResponse(**cal.dict())
+
+
+@app.post("/tisscal/api/cal/change", status_code=200)
+async def get_calender(new_cal: TissCalChangeRequest, current_user: UserDB = Depends(verify_token)):
+    old_cal = tiss_cal_handler.get_calendar_by_token(new_cal.token)
+    if old_cal is None:
+        raise MyHTTPException(status_code=404, detail="You need to create a calendar before you can change it :I")
+
+    res = tiss_cal_handler.update_calendar(TissCalDB(**new_cal.dict(), id=old_cal.id, owner=old_cal.owner, token=old_cal.token))
+    if res is None:
+        raise MyHTTPException(status_code=500, detail="Something went wrong, calendar was not updated :I")
+
+    return TissCalResponse(**res.dict())
     
-    return 
+
+@app.get("/tisscal/api/cal/data/{token}", status_code=200)
+async def get_calender(token: str, current_user: UserDB = Depends(verify_token)):
+    cal = tiss_cal_handler.get_calendar_by_token(token)
+    if cal is None:
+        raise MyHTTPException(status_code=404, detail="Something went wrong (aka. no calendar for you) :I")
+
+    return TissCalResponse(**cal.dict())
 
 
-@app.get("/tisscal/{token}", status_code=status.HTTP_200_OK)
+@app.get("/tisscal/api/cal/delete/{token}", response_model=TissCalSuccessDelete, status_code=200)
+async def get_calender(token: str, current_user: UserDB = Depends(verify_token)):
+    res = tiss_cal_handler.delete_calendar_by_token(token)
+    return {}
+
+
+@app.post("/tisscal/api/cal/change", status_code=200)
+async def get_calender(new_cal: TissCalChangeRequest, current_user: UserDB = Depends(verify_token)):
+    old_cal = tiss_cal_handler.get_calendar_by_token(new_cal.token)
+    if old_cal is None:
+        raise MyHTTPException(status_code=404, detail="You need to create a calendar before you can change it :I")
+
+    res = tiss_cal_handler.update_calendar(TissCalDB(**new_cal.dict(), id=old_cal.id, owner=old_cal.owner, token=old_cal.token))
+    if res is None:
+        raise MyHTTPException(status_code=500, detail="Something went wrong, calendar was not updated :I")
+
+    return TissCalResponse(**res.dict())
+
+
+@app.get("/tisscal/api/cal/{token}", status_code=200)
 async def get_calender(token: str, response: Response):
-    cal_data = get_cal_data_by_token(token)
-    
-    if cal_data is None:
-        response.status_code = status.HTTP_404_NOT_FOUND
-        return "No Calendar for you (check if you typed the URL correctly) :/"
-    
-    new_cal = generate_calendar(cal_data)
-    new_cal_stream = StringIO(new_cal)
+    cal = tiss_cal_handler.prettify_calendar(token)
+    if cal is None:
+        raise MyHTTPException(status_code=404, detail="Something went wrong (aka. no calendar for you) :I")
+
+    new_cal_stream = StringIO(cal)
     return StreamingResponse(iter([new_cal_stream.getvalue()]), media_type="text/calendar")
 
 
-@app.post("/tisscal/", response_model=CalModelResponse, status_code=status.HTTP_200_OK)
-async def alter_cal(cal: CalModelRequest, response: Response, uid: Union[str, None] = Cookie(default=None)):
-    if uid is None:
-        response.status_code = status.HTTP_401_UNAUTHORIZED
-        return "you need to log in :)"
+@app.get("/tisscal/calstring/{token}", status_code=200)
+async def get_calender(token: str, response: Response):
+    cal = tiss_cal_handler.prettify_calendar(token)
+    if cal is None:
+        raise MyHTTPException(status_code=404, detail="Something went wrong (aka. no calendar for you) :I")
+
+    return cal
 
 
-    # TODO Client config more human :)
-    client = MongoClient("mongodb://root:rootPassword@192.168.0.100/")
-    collection = client.get_database('tisscal').get_collection('calendars')
-
-    cal_data = get_cal_data_by_uid(uid)
-    if cal_data is None:
-        cal['uid'] = uid
-        cal['calendarToken'] = generate_token(40)
-        collection.insert_one(cal)
-    else:
-        cal['uid'] = uid
-        cal['calendarToken'] = cal_data['calendarToken']
-        collection.insert_one(cal)
-    client.close()
+# https://andrea-emily-celebration-emacs.trycloudflare.com/tisscal/cal/asdasdasdasdasdasd
