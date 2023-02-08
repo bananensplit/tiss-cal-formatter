@@ -1,44 +1,10 @@
 from icalendar import Calendar
 from functools import cache
-from fastapi import FastAPI, Response, status
-from fastapi.responses import FileResponse
 import csv
 import requests
 import re
 
-# Caleder URL under which the ics file can be found
-TISS_CAL_URL = 'https://tiss.tuwien.ac.at/events/rest/calendar/personal?locale=de&token=XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
-
-# Events that will be deleted
-UNWANTED_EVENTS = ('104.263 UE Algebra und Diskrete Mathematik für Informatik und Wirtschaftsinformatik')
-
-# Events to prettify (if possible will change to nice description, nice location, etc)
-PRETTY_EVENTS = (
-    "104.265 VO Algebra und Diskrete Mathematik für Informatik und Wirtschaftsinformatik",
-    "104.263 UE Algebra und Diskrete Mathematik für Informatik und Wirtschaftsinformatik - P",
-    "192.134 VU Grundzüge digitaler Systeme",
-    "185.A91 VU Einführung in die Programmierung 1",
-    "187.B12 VU Denkweisen der Informatik",
-    "180.766 VU Orientierung Informatik und Wirtschaftsinformatik"
-)
-
-TOKEN = "ZW0awBfTOmpHN7oBmw8jlm5bbWsanT"
-
-DEFAULT_DESCRIPTION_FROMAT = """<b>{{LvaName}}</b>
-Typ: <b>{{LvaTypeShort}}</b> ({{LvaTypeLong}})
-Details: <b><a href="{{TissDetail}}">TISS</a></b>
-Raum: <b>{{RoomName}}</b>, <a href="{{RoomTiss}}">TISS</a>, <a href="{{RoomTuwMap}}">TU-Wien Maps</a>
-Full-Name: {{LvaId}} {{LvaTypeShort}} {{LvaName}}
-<br>
-Tiss Description:
-{{TissCalDesc}}"""
-
-DEFAULT_LOCATION_FROMAT = "{{RoomBuildingAddress}}"
-
-DEFAULT_SUMMARY_FROMAT = "{{LvaTypeShort}} {{LvaName}}"
-
-
-# EXISTSING:
+# Format Properties:
 # TISS-Details Link                                     TissDetail
 # TISS-Calender original Description                    TissCalDesc
 
@@ -209,8 +175,8 @@ def get_cal_from_url(url):
 
 
 @cache
-def read_rooms(file="resources/TU-Room.csv"):
-    with open("TU-Rooms.csv", "r", encoding="UTF-8") as csvfile:
+def read_rooms(file="resources\TU-Rooms.csv"):
+    with open(file, "r", encoding="UTF-8") as csvfile:
         reader = csv.reader(csvfile, delimiter=";")
         return [room for room in reader]
 
@@ -228,33 +194,3 @@ def get_room_data(room_name=None):
             ]
     else:
         return None
-
-
-app = FastAPI()
-
-
-@app.get("/tisscal/{token}", status_code=status.HTTP_200_OK)
-async def get_calender(token: str, response: Response):
-    if token == TOKEN:
-        cal = get_cal_from_url(TISS_CAL_URL)
-
-        # Delete unwanted events
-        cal.subcomponents = [el for el in cal.subcomponents 
-            if el.get('summary', '') not in UNWANTED_EVENTS]
-
-        # Polish known events and leave unkown events untouched
-        for event in cal.walk(name='VEVENT'):
-            ev = Lva.lva_from_ical_event(event)
-            if ev is None:
-                continue
-            
-            ev.set_summary(DEFAULT_SUMMARY_FROMAT)
-            ev.set_location(DEFAULT_LOCATION_FROMAT)
-            ev.set_description(DEFAULT_DESCRIPTION_FROMAT)
-        
-        with open(TOKEN + ".ics", "wb") as f:
-            f.write(cal.to_ical())
-
-        return FileResponse(TOKEN + ".ics", media_type="text/calendar")
-    else:
-        response.status_code = status.HTTP_404_NOT_FOUND
