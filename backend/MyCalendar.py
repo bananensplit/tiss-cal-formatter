@@ -11,10 +11,13 @@ class MyCalendar:
 
     @classmethod
     def get_cal_from_url(cls, url: str):
-        req = requests.get(url, timeout=5)
-        if req.status_code == 200:
-            cal = Calendar.from_ical(req.content)
-            return cls(url, cal)
+        try:
+            req = requests.get(url, timeout=5)
+            if req.status_code == 200:
+                cal = Calendar.from_ical(req.content)
+                return cls(url, cal)
+        except Exception as e:
+            return None
         return None
 
     def get_all_events(self) -> list[Event]:

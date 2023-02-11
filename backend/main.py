@@ -4,9 +4,17 @@ from io import StringIO
 from fastapi import Depends, FastAPI, HTTPException, Request, Response, Security
 from fastapi.responses import JSONResponse, StreamingResponse
 from fastapi.security.api_key import APIKeyCookie
+from fastapi.middleware.cors import CORSMiddleware
 
 from models.ErrorResponse import ErrorResponse
-from models.TissCalModels import TissCalChangeRequest, TissCalCreateRequest, TissCalDB, TissCalResponse, TissCalSuccessDelete
+from models.TissCalModels import (
+    TissCalChangeRequest,
+    TissCalCreateRequest,
+    TissCalDB,
+    TissCalListResponse,
+    TissCalResponse,
+    TissCalSuccessDelete,
+)
 from models.UserModels import UserDB, UserLoginRequest, UserLogoutResponse, UserResponse
 from MyCalendar import MyCalendar
 from MyHTTPException import MyHTTPException
@@ -26,6 +34,17 @@ logger.addHandler(fh)
 
 
 app = FastAPI()
+
+origins = ["https://earliest-preference-wedding-brought.trycloudflare.com", "http://localhost:8000", "http://localhost:5173"]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 user_handler = UserHandler(
     logger=logger,
     connection_string="mongodb://admin:adminadmin@10.0.0.150:8882/",
@@ -86,7 +105,7 @@ async def login(user: UserLoginRequest, response: Response):
     if not (token := user_handler.login(user.username, user.password)):
         raise MyHTTPException(status_code=404, detail="User name or password incorrect")
 
-    response.set_cookie(key="token", value=token, max_age=60 * 60)
+    response.set_cookie(key="token", value=token, max_age=60 * 60, httponly=True, samesite="none", secure=True)
     return {
         "username": user.username,
     }
@@ -103,7 +122,7 @@ async def logout(response: Response, current_user: UserDB = Depends(verify_token
 async def create_cal(request: TissCalCreateRequest, current_user: UserDB = Depends(verify_token)):
     cal = tiss_cal_handler.create_new_calendar(url=request.url, name=request.name, owner=str(current_user.uid))
     if cal is None:
-        raise MyHTTPException(status_code=500, detail="Error creating calendar")
+        raise MyHTTPException(status_code=400, detail="Can't create calendar :I")
     return TissCalResponse(**cal.dict())
 
 
@@ -118,9 +137,17 @@ async def get_calender(new_cal: TissCalChangeRequest, current_user: UserDB = Dep
         raise MyHTTPException(status_code=500, detail="Something went wrong, calendar was not updated :I")
 
     return TissCalResponse(**res.dict())
-    
 
-@app.get("/tisscal/api/cal/data/{token}", status_code=200)
+
+@app.get("/tisscal/api/cal/list", response_model=TissCalListResponse, status_code=200)
+async def get_calenders(current_user: UserDB = Depends(verify_token)):
+    cals = tiss_cal_handler.get_calendars_by_owner(str(current_user.uid))
+    if cals is None:
+        raise MyHTTPException(status_code=404, detail="No calendars found / Something went wrong :I")
+    return TissCalListResponse(calendars=[TissCalResponse(**cal.dict()) for cal in cals])
+
+
+@app.get("/tisscal/api/cal/data/{token}", response_model=TissCalResponse, status_code=200)
 async def get_calender(token: str, current_user: UserDB = Depends(verify_token)):
     cal = tiss_cal_handler.get_calendar_by_token(token)
     if cal is None:
@@ -130,13 +157,13 @@ async def get_calender(token: str, current_user: UserDB = Depends(verify_token))
 
 
 @app.get("/tisscal/api/cal/delete/{token}", response_model=TissCalSuccessDelete, status_code=200)
-async def get_calender(token: str, current_user: UserDB = Depends(verify_token)):
+async def delete_calender(token: str, current_user: UserDB = Depends(verify_token)):
     res = tiss_cal_handler.delete_calendar_by_token(token)
     return {}
 
 
 @app.post("/tisscal/api/cal/change", status_code=200)
-async def get_calender(new_cal: TissCalChangeRequest, current_user: UserDB = Depends(verify_token)):
+async def change_calender(new_cal: TissCalChangeRequest, current_user: UserDB = Depends(verify_token)):
     old_cal = tiss_cal_handler.get_calendar_by_token(new_cal.token)
     if old_cal is None:
         raise MyHTTPException(status_code=404, detail="You need to create a calendar before you can change it :I")
@@ -149,7 +176,7 @@ async def get_calender(new_cal: TissCalChangeRequest, current_user: UserDB = Dep
 
 
 @app.get("/tisscal/api/cal/{token}", status_code=200)
-async def get_calender(token: str, response: Response):
+async def get_calender_by_token(token: str, response: Response):
     cal = tiss_cal_handler.prettify_calendar(token)
     if cal is None:
         raise MyHTTPException(status_code=404, detail="Something went wrong (aka. no calendar for you) :I")

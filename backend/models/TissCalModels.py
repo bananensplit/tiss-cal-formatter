@@ -66,5 +66,9 @@ class TissCalResponse(_TissCalBase, ResponseBase):
     pass
 
 
+class TissCalListResponse(ResponseBase):
+    calendars: list[_TissCalBase] = []
+
+
 class TissCalSuccessDelete(ResponseBase):
     message: str = "Calendar deleted successfully :)"

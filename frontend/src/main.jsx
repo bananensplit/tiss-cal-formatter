@@ -1,0 +1,104 @@
+import { createTheme } from "@mui/material/styles";
+import { SnackbarProvider } from "notistack";
+import React from "react";
+import ReactDOM from "react-dom/client";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import App from "./App";
+import TemplateBanana from "./bananenTempalte/TemplateBanana";
+import FeedbackMachine from "./FeedbackMachine/FeedbackMachine";
+import "./index.css";
+import CalendarOverview from "./Pages/CalendarOverview";
+import EditCalendarView from "./Pages/EditCalenderView";
+import Login from "./Pages/Login";
+import Register from "./Pages/Register";
+
+const theme = createTheme({
+    palette: {
+        praimary: {
+            main: "#252525",
+        },
+        secondary: {
+            main: "#0066ff",
+        },
+    },
+    typography: {
+        fontSize: 12,
+        fontFamily: ["Poppins", "Helvetica", "Arial", "sans-serif"].join(","),
+        h1: {
+            fontSize: "2em",
+            fontWeight: 700,
+        },
+        h2: {
+            fontSize: "1.5em",
+            fontWeight: 700,
+        },
+        h3: {
+            fontSize: "1.17em",
+            fontWeight: 700,
+        },
+        h4: {
+            fontSize: "1em",
+            fontWeight: 700,
+        },
+        h5: {
+            fontSize: "0.83em",
+            fontWeight: 700,
+        },
+        h6: {
+            fontSize: "0.67em",
+            fontWeight: 700,
+        },
+    },
+    components: {
+        MuiTextField: {
+            defaultProps: {
+                size: "small",
+            },
+        },
+        MuiButton: {
+            defaultProps: {
+                variant: "outlined",
+                size: "medium",
+            },
+        },
+        MuiIconButton: {
+            defaultProps: {
+                size: "small",
+            },
+        },
+        MuiFab: {
+            defaultProps: {
+                size: "small",
+            },
+        },
+    },
+});
+
+ReactDOM.createRoot(document.getElementById("root")).render(
+    <React.StrictMode>
+        <BrowserRouter>
+            <TemplateBanana theme={theme}>
+                <SnackbarProvider
+                    anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
+                >
+                    <FeedbackMachine>
+                        <Routes>
+                            <Route path="/" element={<App />} />
+                            <Route path="/login" element={<Login />} />
+                            <Route path="/register" element={<Register />} />
+                            <Route
+                                path="/calendars"
+                                element={<CalendarOverview />}
+                            />
+                            <Route path="/calendars/:token" element={<EditCalendarView />} />
+                            <Route
+                                path="*"
+                                element={<Navigate to="/" replace />}
+                            />
+                        </Routes>
+                    </FeedbackMachine>
+                </SnackbarProvider>
+            </TemplateBanana>
+        </BrowserRouter>
+    </React.StrictMode>
+);

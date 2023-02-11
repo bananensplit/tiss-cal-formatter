@@ -19,6 +19,9 @@ class MyMongoClient(MongoClient):
     
     def update_one(self, *args, **kwargs) -> pymongo.results.UpdateResult:
         return self.collection.update_one(*args, **kwargs)
+    
+    def find(self, *args, **kwargs):
+        return self.collection.find(*args, **kwargs)
 
     def check_connection(self) -> bool:
         try:
