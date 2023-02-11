@@ -14,7 +14,7 @@ services:
       REDIS_PORT: 6379
       REDIS_PASSWORD: None
     ports:
-      - "5173:80"
+      - "8111:80"
     depends_on:
       - redis
       - db
