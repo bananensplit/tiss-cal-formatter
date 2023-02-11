@@ -3,12 +3,10 @@ import { SnackbarProvider } from "notistack";
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
-import App from "./App";
 import TemplateBanana from "./bananenTempalte/TemplateBanana";
 import FeedbackMachine from "./FeedbackMachine/FeedbackMachine";
 import "./index.css";
 import CalendarOverview from "./Pages/CalendarOverview";
-import EditCalendarView from "./Pages/EditCalenderView";
 import Login from "./Pages/Login";
 import Register from "./Pages/Register";
 
@@ -76,21 +74,20 @@ const theme = createTheme({
 
 ReactDOM.createRoot(document.getElementById("root")).render(
     <React.StrictMode>
-        <BrowserRouter>
+        <BrowserRouter basename={import.meta.env.BASE_URL.replace(/\/+$/, "")}>
             <TemplateBanana theme={theme}>
                 <SnackbarProvider
                     anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
                 >
                     <FeedbackMachine>
                         <Routes>
-                            <Route path="/" element={<App />} />
+                            <Route path="/" element={<Login />} />
                             <Route path="/login" element={<Login />} />
                             <Route path="/register" element={<Register />} />
                             <Route
                                 path="/calendars"
                                 element={<CalendarOverview />}
                             />
-                            <Route path="/calendars/:token" element={<EditCalendarView />} />
                             <Route
                                 path="*"
                                 element={<Navigate to="/" replace />}

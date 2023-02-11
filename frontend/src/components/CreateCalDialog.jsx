@@ -42,7 +42,7 @@ function CreateCalDialog({ open, onClose, reloadCalendars }) {
         if (!checkValidity()) return;
 
         setLoading(true);
-        fetch("http://localhost:8000/tisscal/api/cal/create", {
+        fetch(`${import.meta.env.BASE_URL.replace(/\/+$/, "")}/api/cal/create`, {
             method: "POST",
             credentials: "include",
             headers: {

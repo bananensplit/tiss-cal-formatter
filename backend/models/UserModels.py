@@ -34,5 +34,9 @@ class UserLoginRequest(__UserBase):
     pass
 
 
+class UserLoginResponse(UserResponse):
+    pass
+
+
 class UserLogoutResponse(ResponseBase):
     message: str = Field(default="Successfully logged out")

@@ -18,7 +18,7 @@ function CalendarOverview({}) {
 
     function fetchCalendars() {
         setLoading(true);
-        fetch("http://localhost:8000/tisscal/api/cal/list", {
+        fetch(`${import.meta.env.BASE_URL.replace(/\/+$/, "")}/api/cal/list`, {
             credentials: "include",
         })
             .then((response) => response.json())

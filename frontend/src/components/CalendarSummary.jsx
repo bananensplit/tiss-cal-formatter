@@ -1,5 +1,4 @@
 import DeleteRoundedIcon from "@mui/icons-material/DeleteRounded";
-import EditIcon from "@mui/icons-material/Edit";
 import Box from "@mui/material/Box";
 import IconButton from "@mui/material/IconButton";
 import Paper from "@mui/material/Paper";
@@ -25,9 +24,15 @@ function CalendarSummary({ name, url, token, reloadCalendars }) {
 
     function deleteCalendar() {
         setLoading(true);
-        fetch("http://localhost:8000/tisscal/api/cal/delete/" + token, {
-            credentials: "include",
-        })
+        fetch(
+            `${import.meta.env.BASE_URL.replace(
+                /\/+$/,
+                ""
+            )}/api/cal/delete/${token}`,
+            {
+                credentials: "include",
+            }
+        )
             .then((response) => response.json())
             .then((data) => {
                 if (data?.metadata?.error) {
@@ -52,9 +57,6 @@ function CalendarSummary({ name, url, token, reloadCalendars }) {
                 <Typography variant="h4" sx={{ flexGrow: 1 }}>
                     {name || "-"}
                 </Typography>
-                <IconButton onClick={() => navigate(`/calendars/${token}`)}>
-                    <EditIcon />
-                </IconButton>
                 <IconButton onClick={() => setDeleteCalDialog(true)}>
                     <DeleteRoundedIcon />
                 </IconButton>
@@ -70,12 +72,36 @@ function CalendarSummary({ name, url, token, reloadCalendars }) {
                 </CopyElement>
             </Box>
             <Box>
-                <CopyElement copyText={token || ""}>
+                <CopyElement
+                    copyText={
+                        (token &&
+                            `${
+                                window.location.protocol
+                            }${window.location.replace(
+                                /\/+$/,
+                                ""
+                            )}/${import.meta.env.BASE_URL.replace(
+                                /\/+$/,
+                                ""
+                            )}/api/cal/${token}`) ||
+                        ""
+                    }
+                >
                     <Typography
                         variant="subtitle"
                         sx={{ fontFamily: "monospace" }}
                     >
-                        {token || "-"}
+                        {(token &&
+                            `${
+                                window.location.protocol
+                            }${window.location.replace(
+                                /\/+$/,
+                                ""
+                            )}/${import.meta.env.BASE_URL.replace(
+                                /\/+$/,
+                                ""
+                            )}/api/cal/${token}`) ||
+                            ""}
                     </Typography>
                 </CopyElement>
             </Box>

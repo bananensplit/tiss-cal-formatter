@@ -1,21 +1,24 @@
 import logging
+import os
 from io import StringIO
 
+from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, HTTPException, Request, Response, Security
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, StreamingResponse
 from fastapi.security.api_key import APIKeyCookie
-from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
 
 from models.ErrorResponse import ErrorResponse
 from models.TissCalModels import (
-    TissCalChangeRequest,
     TissCalCreateRequest,
-    TissCalDB,
+    TissCalCreateResponse,
     TissCalListResponse,
     TissCalResponse,
     TissCalSuccessDelete,
 )
-from models.UserModels import UserDB, UserLoginRequest, UserLogoutResponse, UserResponse
+from models.UserModels import UserDB, UserLoginRequest, UserLoginResponse, UserLogoutResponse, UserResponse
 from MyCalendar import MyCalendar
 from MyHTTPException import MyHTTPException
 from TissCalHandler import TissCalHandler
@@ -33,13 +36,33 @@ logger.addHandler(ch)
 logger.addHandler(fh)
 
 
-app = FastAPI()
+load_dotenv()
+BASE_URL = os.getenv("BASE_URL")
+MONGO_CONNECTION_STRING = os.getenv("MONGO_CONNECTION_STRING")
+REDIS_HOST = os.getenv("REDIS_HOST")
+REDIS_PORT = os.getenv("REDIS_PORT")
+REDIS_PASSWORD = os.getenv("REDIS_PASSWORD")
 
-origins = ["https://earliest-preference-wedding-brought.trycloudflare.com", "http://localhost:8000", "http://localhost:5173"]
+if BASE_URL is None:
+    logger.error("BASE_URL environment variable is not set")
+    exit(1)
+if MONGO_CONNECTION_STRING is None:
+    logger.error("MONGO_CONNECTION_STRING environment variable is not set")
+    exit(1)
+if REDIS_HOST is None:
+    logger.error("REDIS_HOST environment variable is not set")
+    exit(1)
+if REDIS_PASSWORD in ("", "None"):
+    REDIS_PASSWORD = None
+
+print(type(REDIS_PASSWORD))
+print(REDIS_PASSWORD)
+
+app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -47,22 +70,24 @@ app.add_middleware(
 
 user_handler = UserHandler(
     logger=logger,
-    connection_string="mongodb://admin:adminadmin@10.0.0.150:8882/",
+    connection_string=MONGO_CONNECTION_STRING,
     db_name="tisscal",
     user_collection="users",
-    redis_host="10.0.0.150",
-    redis_port=8881,
-    redis_password=None,
+    redis_host=REDIS_HOST,
+    redis_port=REDIS_PORT,
+    redis_password=REDIS_PASSWORD,
 )
 tiss_cal_handler = TissCalHandler(
     logger=logger,
-    connection_string="mongodb://admin:adminadmin@10.0.0.150:8882/",
+    connection_string=MONGO_CONNECTION_STRING,
     db_name="tisscal",
     tiss_cal_collection="calendars",
     user_handler=user_handler,
 )
 
 api_key_cookie = APIKeyCookie(name="token", auto_error=False)
+
+templates = Jinja2Templates(directory="../frontend/dist")
 
 
 # Exception handlers ####
@@ -92,54 +117,38 @@ async def shutdown_event():
 
 
 # Endpoints ####
-@app.get("/tisscal/api/me", response_model=UserResponse, status_code=200)
+@app.get("/api/me", response_model=UserResponse, status_code=200)
 async def user_data_me(current_user: UserDB = Depends(verify_token)):
     return current_user
 
 
-@app.post("/tisscal/api/login", response_model=UserResponse)
-async def login(user: UserLoginRequest, response: Response):
-    if not user_handler.get_user_by_username(user.username):
-        raise MyHTTPException(status_code=404, detail="User name or password incorrect")
-
-    if not (token := user_handler.login(user.username, user.password)):
+@app.post("/api/login", response_model=UserLoginResponse)
+async def login(request: UserLoginRequest, response: Response):
+    if not (token := user_handler.login(request.username, request.password)):
         raise MyHTTPException(status_code=404, detail="User name or password incorrect")
 
     response.set_cookie(key="token", value=token, max_age=60 * 60, httponly=True, samesite="none", secure=True)
     return {
-        "username": user.username,
+        "username": request.username,
     }
 
 
-@app.get("/tisscal/api/logout", response_model=UserLogoutResponse, status_code=200)
+@app.get("/api/logout", response_model=UserLogoutResponse, status_code=200)
 async def logout(response: Response, current_user: UserDB = Depends(verify_token)):
     user_handler.logout(str(current_user.uid))
     response.delete_cookie(key="token")
     return {}
 
 
-@app.post("/tisscal/api/cal/create", response_model=TissCalResponse, status_code=200)
+@app.post("/api/cal/create", response_model=TissCalCreateResponse, status_code=200)
 async def create_cal(request: TissCalCreateRequest, current_user: UserDB = Depends(verify_token)):
     cal = tiss_cal_handler.create_new_calendar(url=request.url, name=request.name, owner=str(current_user.uid))
     if cal is None:
         raise MyHTTPException(status_code=400, detail="Can't create calendar :I")
-    return TissCalResponse(**cal.dict())
+    return TissCalCreateResponse(**cal.dict())
 
 
-@app.post("/tisscal/api/cal/change", status_code=200)
-async def get_calender(new_cal: TissCalChangeRequest, current_user: UserDB = Depends(verify_token)):
-    old_cal = tiss_cal_handler.get_calendar_by_token(new_cal.token)
-    if old_cal is None:
-        raise MyHTTPException(status_code=404, detail="You need to create a calendar before you can change it :I")
-
-    res = tiss_cal_handler.update_calendar(TissCalDB(**new_cal.dict(), id=old_cal.id, owner=old_cal.owner, token=old_cal.token))
-    if res is None:
-        raise MyHTTPException(status_code=500, detail="Something went wrong, calendar was not updated :I")
-
-    return TissCalResponse(**res.dict())
-
-
-@app.get("/tisscal/api/cal/list", response_model=TissCalListResponse, status_code=200)
+@app.get("/api/cal/list", response_model=TissCalListResponse, status_code=200)
 async def get_calenders(current_user: UserDB = Depends(verify_token)):
     cals = tiss_cal_handler.get_calendars_by_owner(str(current_user.uid))
     if cals is None:
@@ -147,35 +156,13 @@ async def get_calenders(current_user: UserDB = Depends(verify_token)):
     return TissCalListResponse(calendars=[TissCalResponse(**cal.dict()) for cal in cals])
 
 
-@app.get("/tisscal/api/cal/data/{token}", response_model=TissCalResponse, status_code=200)
-async def get_calender(token: str, current_user: UserDB = Depends(verify_token)):
-    cal = tiss_cal_handler.get_calendar_by_token(token)
-    if cal is None:
-        raise MyHTTPException(status_code=404, detail="Something went wrong (aka. no calendar for you) :I")
-
-    return TissCalResponse(**cal.dict())
-
-
-@app.get("/tisscal/api/cal/delete/{token}", response_model=TissCalSuccessDelete, status_code=200)
+@app.get("/api/cal/delete/{token}", response_model=TissCalSuccessDelete, status_code=200)
 async def delete_calender(token: str, current_user: UserDB = Depends(verify_token)):
     res = tiss_cal_handler.delete_calendar_by_token(token)
     return {}
 
 
-@app.post("/tisscal/api/cal/change", status_code=200)
-async def change_calender(new_cal: TissCalChangeRequest, current_user: UserDB = Depends(verify_token)):
-    old_cal = tiss_cal_handler.get_calendar_by_token(new_cal.token)
-    if old_cal is None:
-        raise MyHTTPException(status_code=404, detail="You need to create a calendar before you can change it :I")
-
-    res = tiss_cal_handler.update_calendar(TissCalDB(**new_cal.dict(), id=old_cal.id, owner=old_cal.owner, token=old_cal.token))
-    if res is None:
-        raise MyHTTPException(status_code=500, detail="Something went wrong, calendar was not updated :I")
-
-    return TissCalResponse(**res.dict())
-
-
-@app.get("/tisscal/api/cal/{token}", status_code=200)
+@app.get("/api/cal/{token}", status_code=200)
 async def get_calender_by_token(token: str, response: Response):
     cal = tiss_cal_handler.prettify_calendar(token)
     if cal is None:
@@ -185,13 +172,10 @@ async def get_calender_by_token(token: str, response: Response):
     return StreamingResponse(iter([new_cal_stream.getvalue()]), media_type="text/calendar")
 
 
-@app.get("/tisscal/calstring/{token}", status_code=200)
-async def get_calender(token: str, response: Response):
-    cal = tiss_cal_handler.prettify_calendar(token)
-    if cal is None:
-        raise MyHTTPException(status_code=404, detail="Something went wrong (aka. no calendar for you) :I")
-
-    return cal
+app.mount("/assets", StaticFiles(directory="../frontend/dist/assets", html=True, check_dir=True), name="frontend-assets")
 
 
-# https://andrea-emily-celebration-emacs.trycloudflare.com/tisscal/cal/asdasdasdasdasdasd
+@app.get("/{full_path:path}", include_in_schema=False)
+async def serve_frontend(request: Request, full_path: str):
+    logger.info(f"frontend: serving frontend for path={full_path}")
+    return templates.TemplateResponse("index.html", {"request": request})

@@ -1,0 +1,53 @@
+version: "3.9"
+services:
+  api:
+    build:
+      context: .
+      args:
+        BASE_URL: /
+    networks:
+      net:
+        ipv4_address: 172.101.0.1
+    environment:
+      MONGO_CONNECTION_STRING: mongodb://root:rootPassword@172.101.0.2:27017
+      REDIS_HOST: 172.101.0.3
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: None
+    ports:
+      - "5173:80"
+    depends_on:
+      - redis
+      - db
+  
+  db:
+    image: mongo
+    networks:
+      net:
+        ipv4_address: 172.101.0.2
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: rootPassword
+    ports:
+      - "8882:27017"
+    volumes:
+      - "db-volume:/data/db"
+
+  redis:
+    image: redis
+    networks:
+      net:
+        ipv4_address: 172.101.0.3
+
+
+volumes:
+  db-volume: {}
+
+
+networks:
+  net:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.101.0.0/16
+          gateway: 172.101.0.1

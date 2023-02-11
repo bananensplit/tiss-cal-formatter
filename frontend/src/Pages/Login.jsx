@@ -20,7 +20,7 @@ function Login({}) {
         if (!checkValidity()) return;
 
         setLoading(true);
-        fetch("http://localhost:8000/tisscal/api/login", {
+        fetch(`${import.meta.env.BASE_URL.replace(/\/+$/, "")}/api/login`, {
             method: "POST",
             credentials: "include",
             headers: {

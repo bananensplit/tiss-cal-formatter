@@ -53,16 +53,16 @@ class TissCalDB(_TissCalBase):
         arbitrary_types_allowed = True
 
 
+class TissCalResponse(_TissCalBase, ResponseBase):
+    pass
+
+
 class TissCalCreateRequest(BaseModel):
     url: str
     name: str
 
 
-class TissCalChangeRequest(_TissCalBase):
-    pass
-
-
-class TissCalResponse(_TissCalBase, ResponseBase):
+class TissCalCreateResponse(TissCalResponse):
     pass
 
 
