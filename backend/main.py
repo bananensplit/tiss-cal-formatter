@@ -60,7 +60,7 @@ if REDIS_HOST is None:
 if REDIS_PASSWORD in ("", "None"):
     REDIS_PASSWORD = None
 
-if DEVELOPMENT_MODE in ("", "None", "False", "false"):
+if DEVELOPMENT_MODE in (None, "", "None", "False", "false"):
     DEVELOPMENT_MODE = False
 else:
     DEVELOPMENT_MODE = True
