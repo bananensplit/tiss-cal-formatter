@@ -1,5 +1,7 @@
 # TISS Calendar Formatter
 
+> This service is hosted under https://bananensplit.com/tisscal
+
 ## Development
 ### Backend
 For the backend to work properly you need to setup a MongoDB database and a Redis database. It is recommended to do this with docker containers for easier handeling and configuration.
