@@ -9,6 +9,9 @@ class _TissCalEventModel(BaseModel):
     will_prettify: bool = False
     will_remove: bool = False
     is_lva: bool = False
+    summaryFormat: str = None
+    locationFormat: str = None
+    descriptionFormat: str = None
 
 
 class _TissCalDefaultTemplateModel(BaseModel):
@@ -24,12 +27,6 @@ Tiss Description:
 {{TissCalDesc}}"""
 
 
-class _TissCalTemplateModel(BaseModel):
-    summaryFormat: str
-    locationFormat: str
-    descriptionFormat: str
-
-
 class _TissCalBase(BaseModel):
     url: str
     name: str
@@ -37,7 +34,6 @@ class _TissCalBase(BaseModel):
 
     all_events: list[_TissCalEventModel]
     default_template: _TissCalDefaultTemplateModel = _TissCalDefaultTemplateModel()
-    templates: dict[str, _TissCalTemplateModel] = []
 
 
 class TissCalDBCreate(_TissCalBase):
@@ -66,9 +62,21 @@ class TissCalCreateResponse(TissCalResponse):
     pass
 
 
+class TissCalDataResponse(TissCalResponse):
+    pass
+
+
+class TissCalUpdateRequest(TissCalResponse):
+    pass
+
+
+class TissCalUpdateResponse(TissCalResponse):
+    pass
+
+
 class TissCalListResponse(ResponseBase):
     calendars: list[_TissCalBase] = []
 
 
-class TissCalSuccessDelete(ResponseBase):
+class TissCalSuccessDeleteResponse(ResponseBase):
     message: str = "Calendar deleted successfully :)"

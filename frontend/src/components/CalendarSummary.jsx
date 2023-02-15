@@ -8,6 +8,7 @@ import { useNavigate } from "react-router-dom";
 import useFeedbackMachine from "../FeedbackMachine/useFeedbackMachine";
 import CopyElement from "./CopyElement";
 import DeleteCalDialog from "./DeleteCalDialog";
+import EditRoundedIcon from "@mui/icons-material/EditRounded";
 
 function CalendarSummary({ name, url, token, reloadCalendars }) {
     const { setLoading, loading, addError, addSuccess } = useFeedbackMachine();
@@ -57,6 +58,11 @@ function CalendarSummary({ name, url, token, reloadCalendars }) {
                 <Typography variant="h4" sx={{ flexGrow: 1 }}>
                     {name || "-"}
                 </Typography>
+                <IconButton
+                    onClick={() => navigate(`/calendars/edit/${token}`)}
+                >
+                    <EditRoundedIcon />
+                </IconButton>
                 <IconButton onClick={() => setDeleteCalDialog(true)}>
                     <DeleteRoundedIcon />
                 </IconButton>
@@ -76,11 +82,8 @@ function CalendarSummary({ name, url, token, reloadCalendars }) {
                     copyText={
                         (token &&
                             `${
-                                window.location.protocol
-                            }${window.location.replace(
-                                /\/+$/,
-                                ""
-                            )}/${import.meta.env.BASE_URL.replace(
+                                window.location.origin
+                            }${import.meta.env.BASE_URL.replace(
                                 /\/+$/,
                                 ""
                             )}/api/cal/${token}`) ||
@@ -93,11 +96,8 @@ function CalendarSummary({ name, url, token, reloadCalendars }) {
                     >
                         {(token &&
                             `${
-                                window.location.protocol
-                            }${window.location.replace(
-                                /\/+$/,
-                                ""
-                            )}/${import.meta.env.BASE_URL.replace(
+                                window.location.origin
+                            }${import.meta.env.BASE_URL.replace(
                                 /\/+$/,
                                 ""
                             )}/api/cal/${token}`) ||

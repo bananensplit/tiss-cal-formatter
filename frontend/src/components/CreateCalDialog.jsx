@@ -65,7 +65,7 @@ function CreateCalDialog({ open, onClose, reloadCalendars }) {
                 }
             })
             .catch((error) => {
-                console.log(error);
+                console.error(error);
                 addError("Something went wrong :(")
             })
             .finally(() => setLoading(false));

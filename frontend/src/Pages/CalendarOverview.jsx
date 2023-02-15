@@ -8,7 +8,7 @@ import CreateCalDialog from "../components/CreateCalDialog";
 import useFeedbackMachine from "../FeedbackMachine/useFeedbackMachine";
 
 function CalendarOverview({}) {
-    const { setLoading, loading } = useFeedbackMachine();
+    const { setLoading, loading, addError, addSuccess } = useFeedbackMachine();
     const [calendars, setCalendars] = useState([]);
 
     const [createCalDialog, setCreateCalDialog] = useState(false);
@@ -25,12 +25,13 @@ function CalendarOverview({}) {
             .then((data) => {
                 if (data?.metadata?.error) {
                     console.error(data?.message);
+                    addError(data?.message);
                 } else {
                     setCalendars(data?.calendars);
                 }
             })
             .catch((error) => {
-                console.log(error);
+                console.error(error);
                 addError("An error occured!");
             })
             .finally(() => setLoading(false));
@@ -50,6 +51,7 @@ function CalendarOverview({}) {
             {<Typography variant="body2">No calendars found :I</Typography> &&
                 calendars.map((calendar) => (
                     <CalendarSummary
+                        key={calendar?.token}
                         name={calendar?.name}
                         url={calendar?.url}
                         token={calendar?.token}

@@ -7,10 +7,13 @@ import Typography from "@mui/material/Typography";
 import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import useFeedbackMachine from "../FeedbackMachine/useFeedbackMachine";
+import useAuth from "../AuthContext/useAuth";
 
 function Login({}) {
     const navigate = useNavigate();
     const { setLoading, loading, addSuccess, addError } = useFeedbackMachine();
+    const { setUser, user, loggedIn } = useAuth();
+
     const [usernameError, setUsernameError] = useState(false);
     const [passwordError, setPasswordError] = useState(false);
     const usernameRef = useRef(null);
@@ -38,10 +41,11 @@ function Login({}) {
                     setUsernameError(data?.message);
                     setPasswordError(data?.message);
                 } else {
+                    setUser(data);
                     navigate("/calendars");
                 }
             })
-            .catch((error) => console.log(error))
+            .catch((error) => console.error(error))
             .finally(() => setLoading(false));
     }
 
@@ -61,6 +65,7 @@ function Login({}) {
             passwordRef.current.checkValidity()
         );
     }
+    
 
     return (
         <Box

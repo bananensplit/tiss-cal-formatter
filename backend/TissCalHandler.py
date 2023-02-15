@@ -53,6 +53,9 @@ class TissCalHandler:
                         "will_prettify": Lva.is_lva_str(event_name),
                         "will_remove": False,
                         "is_lva": Lva.is_lva_str(event_name),
+                        "summaryFormat": None,
+                        "locationFormat": None,
+                        "descriptionFormat": None,
                     }
                     for event_name in cal.get_distinct_events()
                 ],
@@ -60,10 +63,10 @@ class TissCalHandler:
             result = client.insert_one(data)
 
         return TissCalDB(uid=result.inserted_id, **data)
-    
+
     def update_calendar(self, calendar: TissCalDB) -> TissCalDB | None:
         with self._get_mongo_connection() as client:
-            result = client.update_one({"_id": calendar.id}, {"$set": calendar.dict()})
+            result = client.update_one({"_id": calendar.id}, {"$set": calendar.dict(exclude={"id"})})
             if result.matched_count == 0:
                 return None
 
@@ -107,9 +110,17 @@ class TissCalHandler:
             if not (event.is_lva and event.will_prettify):
                 continue
 
-            location_template = cal_data.templates.get(event.name, cal_data.default_template.defaultLocationFormat)
-            description_template = cal_data.templates.get(event.name, cal_data.default_template.defaultDescriptionFormat)
-            summary_template = cal_data.templates.get(event.name, cal_data.default_template.defaultSummaryFormat)
+            location_template = (
+                event.locationFormat if event.locationFormat is not None else cal_data.default_template.defaultLocationFormat
+            )
+            description_template = (
+                event.descriptionFormat
+                if event.descriptionFormat is not None
+                else cal_data.default_template.defaultDescriptionFormat
+            )
+            summary_template = (
+                event.summaryFormat if event.summaryFormat is not None else cal_data.default_template.defaultSummaryFormat
+            )
             cal.prettify_events_by_name(event.name, location_template, description_template, summary_template)
 
         return cal.to_ical()

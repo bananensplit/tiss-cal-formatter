@@ -14,9 +14,13 @@ from models.ErrorResponse import ErrorResponse
 from models.TissCalModels import (
     TissCalCreateRequest,
     TissCalCreateResponse,
+    TissCalDB,
+    TissCalDataResponse,
     TissCalListResponse,
     TissCalResponse,
-    TissCalSuccessDelete,
+    TissCalSuccessDeleteResponse,
+    TissCalUpdateRequest,
+    TissCalUpdateResponse,
 )
 from models.UserModels import UserDB, UserLoginRequest, UserLoginResponse, UserLogoutResponse, UserResponse
 from MyCalendar import MyCalendar
@@ -42,6 +46,7 @@ MONGO_CONNECTION_STRING = os.getenv("MONGO_CONNECTION_STRING")
 REDIS_HOST = os.getenv("REDIS_HOST")
 REDIS_PORT = os.getenv("REDIS_PORT")
 REDIS_PASSWORD = os.getenv("REDIS_PASSWORD")
+DEVELOPMENT_MODE = os.getenv("DEVELOPMENT_MODE")
 
 if BASE_URL is None:
     logger.error("BASE_URL environment variable is not set")
@@ -55,10 +60,14 @@ if REDIS_HOST is None:
 if REDIS_PASSWORD in ("", "None"):
     REDIS_PASSWORD = None
 
-print(type(REDIS_PASSWORD))
-print(REDIS_PASSWORD)
+if DEVELOPMENT_MODE in ("", "None", "False", "false"):
+    DEVELOPMENT_MODE = False
+else:
+    DEVELOPMENT_MODE = True
 
-app = FastAPI()
+
+
+app = FastAPI(root_path=BASE_URL, title="TissCal API")
 
 app.add_middleware(
     CORSMiddleware,
@@ -149,17 +158,37 @@ async def create_cal(request: TissCalCreateRequest, current_user: UserDB = Depen
 
 
 @app.get("/api/cal/list", response_model=TissCalListResponse, status_code=200)
-async def get_calenders(current_user: UserDB = Depends(verify_token)):
+async def get_calendars(current_user: UserDB = Depends(verify_token)):
     cals = tiss_cal_handler.get_calendars_by_owner(str(current_user.uid))
     if cals is None:
         raise MyHTTPException(status_code=404, detail="No calendars found / Something went wrong :I")
     return TissCalListResponse(calendars=[TissCalResponse(**cal.dict()) for cal in cals])
 
 
-@app.get("/api/cal/delete/{token}", response_model=TissCalSuccessDelete, status_code=200)
+@app.get("/api/cal/delete/{token}", response_model=TissCalSuccessDeleteResponse, status_code=200)
 async def delete_calender(token: str, current_user: UserDB = Depends(verify_token)):
+    # TODO: Check if user is owner
     res = tiss_cal_handler.delete_calendar_by_token(token)
     return {}
+
+
+@app.get("/api/cal/data/{token}", response_model=TissCalDataResponse, status_code=200)
+async def get_calendar_data(token: str, current_user: UserDB = Depends(verify_token)):
+    res = tiss_cal_handler.get_calendar_by_token(token)
+    if res is None:
+        raise MyHTTPException(status_code=404, detail="There is no calendar with this token :I")
+    return TissCalDataResponse(**res.dict())
+
+
+@app.post("/api/cal/data", response_model=TissCalUpdateResponse, status_code=200)
+async def update_calender_data(request: TissCalUpdateRequest, current_user: UserDB = Depends(verify_token)):
+    # TODO: Check if user is owner
+    # TODO: Handle token change (or deny it at all) -> for now token changes are just ignored (not changed at all)
+    old_cal = tiss_cal_handler.get_calendar_by_token(request.token)
+    if old_cal is None:
+        raise MyHTTPException(status_code=404, detail="There is no calendar with this token :I")
+    res = tiss_cal_handler.update_calendar(TissCalDB(**old_cal.dict(), **request.dict(exclude={"token"})))
+    return TissCalUpdateResponse(**res.dict())
 
 
 @app.get("/api/cal/{token}", status_code=200)
@@ -172,10 +201,10 @@ async def get_calender_by_token(token: str, response: Response):
     return StreamingResponse(iter([new_cal_stream.getvalue()]), media_type="text/calendar")
 
 
-app.mount("/assets", StaticFiles(directory="../frontend/dist/assets", html=True, check_dir=True), name="frontend-assets")
+if not DEVELOPMENT_MODE:
+    app.mount("/assets", StaticFiles(directory="../frontend/dist/assets", html=True, check_dir=True), name="frontend-assets")
 
-
-@app.get("/{full_path:path}", include_in_schema=False)
-async def serve_frontend(request: Request, full_path: str):
-    logger.info(f"frontend: serving frontend for path={full_path}")
-    return templates.TemplateResponse("index.html", {"request": request})
+    @app.get("/{full_path:path}", include_in_schema=False)
+    async def serve_frontend(request: Request, full_path: str):
+        logger.info(f"frontend: serving frontend for path={full_path}")
+        return templates.TemplateResponse("index.html", {"request": request})
