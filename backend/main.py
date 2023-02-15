@@ -184,10 +184,11 @@ async def get_calendar_data(token: str, current_user: UserDB = Depends(verify_to
 async def update_calender_data(request: TissCalUpdateRequest, current_user: UserDB = Depends(verify_token)):
     # TODO: Check if user is owner
     # TODO: Handle token change (or deny it at all) -> for now token changes are just ignored (not changed at all)
+    # TODO: Check if given templates are valid (contain only valid placeholders)
     old_cal = tiss_cal_handler.get_calendar_by_token(request.token)
     if old_cal is None:
         raise MyHTTPException(status_code=404, detail="There is no calendar with this token :I")
-    res = tiss_cal_handler.update_calendar(TissCalDB(**old_cal.dict(), **request.dict(exclude={"token"})))
+    res = tiss_cal_handler.update_calendar(TissCalDB(**{**old_cal.dict(), **request.dict(exclude={"token"})}))
     return TissCalUpdateResponse(**res.dict())
 
 

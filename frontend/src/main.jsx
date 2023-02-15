@@ -43,6 +43,11 @@ const theme = createTheme({
             fontSize: "0.67em",
             fontWeight: 700,
         },
+        code: {
+            fontSize: "1em",
+            fontFamily: "monospace",
+            whiteSpace: "pre",
+        }
     },
     components: {
         MuiTextField: {

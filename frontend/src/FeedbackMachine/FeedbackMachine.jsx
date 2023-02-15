@@ -40,7 +40,7 @@ function FeedbackMachine({ children }) {
         <FeedbackContext.Provider
             value={{
                 setLoading: setLoading,
-                loading: loadingState,
+                loading: loadingState != 0,
                 addSuccess: addSuccess,
                 addError: addError,
             }}

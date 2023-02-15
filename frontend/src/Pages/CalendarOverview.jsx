@@ -48,16 +48,15 @@ function CalendarOverview({}) {
                 padding: 2,
             }}
         >
-            {<Typography variant="body2">No calendars found :I</Typography> &&
-                calendars.map((calendar) => (
-                    <CalendarSummary
-                        key={calendar?.token}
-                        name={calendar?.name}
-                        url={calendar?.url}
-                        token={calendar?.token}
-                        reloadCalendars={fetchCalendars}
-                    />
-                ))}
+            {calendars.map((calendar) => (
+                <CalendarSummary
+                    key={calendar?.token}
+                    name={calendar?.name}
+                    url={calendar?.url}
+                    token={calendar?.token}
+                    reloadCalendars={fetchCalendars}
+                />
+            )) || <Typography variant="body2">No calendars found :I</Typography>}
 
             <Fab
                 color="secondary"
