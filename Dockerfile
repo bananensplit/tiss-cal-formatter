@@ -30,7 +30,6 @@ RUN npm run build -- --base ${BASE_URL}
 # SETUP THE BACKEND
 WORKDIR /home/pn/app/backend
 
-COPY backend/README.md ./
 COPY backend/requirements.txt ./
 COPY backend/main.py ./
 COPY backend/UserHandler.py ./
