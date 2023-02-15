@@ -50,4 +50,4 @@ networks:
       driver: default
       config:
         - subnet: 172.101.0.0/16
-          gateway: 172.101.0.1
+          gateway: 172.101.0.254

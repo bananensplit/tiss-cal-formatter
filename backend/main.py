@@ -117,6 +117,13 @@ def verify_token(token: str = Security(api_key_cookie)) -> UserDB | None:
 @app.on_event("startup")
 async def startup_event():
     logger.warning("Starting up")
+    logger.debug("Environment variables:")
+    logger.debug(f"BASE_URL:                {BASE_URL}")
+    logger.debug(f"MONGO_CONNECTION_STRING: {MONGO_CONNECTION_STRING}")
+    logger.debug(f"REDIS_HOST:              {REDIS_HOST}")
+    logger.debug(f"REDIS_PORT:              {REDIS_PORT}")
+    logger.debug(f"REDIS_PASSWORD:          {REDIS_PASSWORD}")
+    logger.debug(f"DEVELOPMENT_MODE:        {DEVELOPMENT_MODE}")
 
 
 @app.on_event("shutdown")
