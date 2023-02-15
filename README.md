@@ -28,6 +28,14 @@ python -m virutalenv venv
 source ./venv/bin/activate
 pip install -r requirements.txt
 
+# Create .env file
+echo BASE_URL="/" >> .env
+echo MONGO_CONNECTION_STRING="mongodb://root:rootPassword@localhost:8881" >> .env
+echo REDIS_HOST="localhost" >> .env
+echo REDIS_PORT=8882 >> .env
+echo REDIS_PASSWORD="None" >> .env
+echo DEVELOPMENT_MODE=True >> .env
+
 # Startup
 uvicorn main:app --reload
 ```
@@ -55,6 +63,14 @@ cd backend
 python -m virtualenv venv
 & ./venv/Scripts/activate
 pip install -r requirements.txt
+
+# Create .env file
+echo BASE_URL="/" >> .env
+echo MONGO_CONNECTION_STRING="mongodb://root:rootPassword@localhost:8881" >> .env
+echo REDIS_HOST="localhost" >> .env
+echo REDIS_PORT=8882 >> .env
+echo REDIS_PASSWORD="None" >> .env
+echo DEVELOPMENT_MODE=True >> .env
 
 # Startup
 uvicorn main:app --reload
