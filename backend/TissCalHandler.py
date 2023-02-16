@@ -93,7 +93,7 @@ class TissCalHandler:
             return [TissCalDB(**d) for d in data]
 
     def prettify_calendar(self, token: str) -> str | None:
-        cal_data = self.get_calendar_by_token(token)
+        cal_data = self.update_calendar_from_source(token)
         if cal_data is None:
             return None
 
@@ -124,6 +124,33 @@ class TissCalHandler:
             cal.prettify_events_by_name(event.name, location_template, description_template, summary_template)
 
         return cal.to_ical()
+
+    def update_calendar_from_source(self, token: str) -> TissCalDB | None:
+        old_cal_data = self.get_calendar_by_token(token)
+        if old_cal_data is None:
+            return None
+
+        new_cal = MyCalendar.get_cal_from_url(old_cal_data.url)
+        if new_cal is None:
+            return None
+
+        old_cal_event_names = [event.name for event in old_cal_data.all_events]
+        for event_name in new_cal.get_distinct_events():
+            if event_name in old_cal_event_names:
+                continue
+            old_cal_data.all_events.append(
+                {
+                    "name": event_name,
+                    "will_prettify": Lva.is_lva_str(event_name),
+                    "will_remove": False,
+                    "is_lva": Lva.is_lva_str(event_name),
+                    "summaryFormat": None,
+                    "locationFormat": None,
+                    "descriptionFormat": None,
+                }
+            )
+
+        return self.update_calendar(old_cal_data)
 
     @staticmethod
     def generate_calendar_token(length=30) -> str:

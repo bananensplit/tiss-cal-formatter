@@ -19,7 +19,8 @@ from models.TissCalModels import (
     TissCalListResponse,
     TissCalResponse,
     TissCalSuccessDeleteResponse,
-    TissCalUpdateRequest,
+    TissCalChangeRequest,
+    TissCalChangeResponse,
     TissCalUpdateResponse,
 )
 from models.UserModels import UserDB, UserLoginRequest, UserLoginResponse, UserLogoutResponse, UserResponse
@@ -57,14 +58,13 @@ if MONGO_CONNECTION_STRING is None:
 if REDIS_HOST is None:
     logger.error("REDIS_HOST environment variable is not set")
     exit(1)
-if REDIS_PASSWORD in ("", "None"):
+if REDIS_PASSWORD in (None, "", "None"):
     REDIS_PASSWORD = None
 
 if DEVELOPMENT_MODE in (None, "", "None", "False", "false"):
     DEVELOPMENT_MODE = False
 else:
     DEVELOPMENT_MODE = True
-
 
 
 app = FastAPI(root_path=BASE_URL, title="TissCal API")
@@ -187,8 +187,8 @@ async def get_calendar_data(token: str, current_user: UserDB = Depends(verify_to
     return TissCalDataResponse(**res.dict())
 
 
-@app.post("/api/cal/data", response_model=TissCalUpdateResponse, status_code=200)
-async def update_calender_data(request: TissCalUpdateRequest, current_user: UserDB = Depends(verify_token)):
+@app.post("/api/cal/data", response_model=TissCalChangeResponse, status_code=200)
+async def update_calender_data(request: TissCalChangeRequest, current_user: UserDB = Depends(verify_token)):
     # TODO: Check if user is owner
     # TODO: Handle token change (or deny it at all) -> for now token changes are just ignored (not changed at all)
     # TODO: Check if given templates are valid (contain only valid placeholders)
@@ -196,7 +196,7 @@ async def update_calender_data(request: TissCalUpdateRequest, current_user: User
     if old_cal is None:
         raise MyHTTPException(status_code=404, detail="There is no calendar with this token :I")
     res = tiss_cal_handler.update_calendar(TissCalDB(**{**old_cal.dict(), **request.dict(exclude={"token"})}))
-    return TissCalUpdateResponse(**res.dict())
+    return TissCalChangeResponse(**res.dict())
 
 
 @app.get("/api/cal/{token}", status_code=200)
@@ -207,6 +207,15 @@ async def get_calender_by_token(token: str, response: Response):
 
     new_cal_stream = StringIO(cal)
     return StreamingResponse(iter([new_cal_stream.getvalue()]), media_type="text/calendar")
+
+
+@app.get("/api/cal/update/{token}", response_model=TissCalUpdateResponse, status_code=200)
+async def update_calender_by_token(token: str, response: Response, current_user: UserDB = Depends(verify_token)):
+    # TODO Check if user is owner
+    cal = tiss_cal_handler.update_calendar_from_source(token)
+    if cal is None:
+        raise MyHTTPException(status_code=404, detail="Something went wrong (aka. no calendar for you) :I")
+    return TissCalUpdateResponse(**cal.dict())
 
 
 if not DEVELOPMENT_MODE:

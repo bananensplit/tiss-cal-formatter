@@ -58,7 +58,6 @@ function CalendarEdit({}) {
 
     function updateCalendar() {
         setLoading(true);
-        console.log(calendar);
         fetch(`${import.meta.env.BASE_URL.replace(/\/+$/, "")}/api/cal/data`, {
             method: "POST",
             credentials: "include",
@@ -69,7 +68,6 @@ function CalendarEdit({}) {
         })
             .then((response) => response.json())
             .then((data) => {
-                console.log(data);
                 if (data?.metadata?.error) {
                     console.error(data?.message);
                     addError(data?.message);
@@ -77,6 +75,26 @@ function CalendarEdit({}) {
                     setCalendar(data);
                     setOldCalendar(data);
                     addSuccess("Calendar updated!");
+                }
+            })
+            .catch((error) => console.error(error))
+            .finally(() => setLoading(false));
+    }
+
+    function updateCalendarFromSource() {
+        setLoading(true);
+        fetch(`${import.meta.env.BASE_URL.replace(/\/+$/, "")}/api/cal/update/${token}`, {
+            include: "credentials",
+        })
+            .then((response) => response.json())
+            .then((data) => {
+                if (data?.metadata?.error) {
+                    console.error(data?.message);
+                    addError(data?.message);
+                } else {
+                    setCalendar(data);
+                    setOldCalendar(data);
+                    addSuccess("Calendar updated from source!");
                 }
             })
             .catch((error) => console.error(error))
@@ -153,29 +171,72 @@ function CalendarEdit({}) {
                 >
                     Reset Changes
                 </Button>
+                <Button
+                    onClick={updateCalendarFromSource}
+                    disabled={loading}
+                    color="warning"
+                >
+                    Reload from Source
+                </Button>
             </Box>
 
             <Typography variant="h4" sx={{ mt: 3 }}>
                 Default Templates
             </Typography>
-            <Box sx={{mt: 2, ml: 3, display: "flex", flexDirection: "column"}}>
+            <Box sx={{ mt: 2, ml: 3, display: "flex", flexDirection: "column" }}>
                 <Typography variant="code" sx={{ fontWeight: "bold" }}>
-                {'Description                                           Variable'}
+                    {"Description                                           Variable"}
                 </Typography>
-                <Typography variant="code">{'TISS-Details Link                                     TissDetail'}</Typography>
-                <Typography variant="code">{'TISS-Calender original Description                    TissCalDesc'}</Typography>
-                <Typography variant="code">{'Room Name (Ausgeschriebener Raum Name)                RoomName'}</Typography>
-                <Typography variant="code">{'Room TISS-Raumbelegung Link                           RoomTiss'}</Typography>
-                <Typography variant="code">{'Room TUW-Maps Link                                    RoomTuwMap'}</Typography>
-                <Typography variant="code">{'Room Gebäude Addresse (z.B. "Getreidemarkt 9")        RoomBuildingAddress'}</Typography>
-                <Typography variant="code">{'StartDate formated as (dd-MM-YYYY)                    StartDate'}</Typography>
-                <Typography variant="code">{'StartTime formated as (hh:mm)                         StartTime'}</Typography>
-                <Typography variant="code">{'EndDate formated as (dd-MM-YYYY)                      EndDate'}</Typography>
-                <Typography variant="code">{'EndTime formated as (hh:mm)                           EndTime'}</Typography>
-                <Typography variant="code">{'LVA Name (z.B. "Algebra und Diskrete Mathematik für Informatik und Wirtschaftsinformatik")    LvaName'}</Typography>
-                <Typography variant="code">{'LVA Typ kurz (z.B. "VO", "UE", "VU", ...)                                                     LvaTypeShort'}</Typography>
-                <Typography variant="code">{'LVA Typ lang (z.B. "Vorlesung", "Übung", "Vorlesung mit Übung")                               LvaTypeLong'}</Typography>
-                <Typography variant="code">{'LVA ID (z.B. "104.265")                                                                       LvaId'}</Typography>
+                <Typography variant="code">
+                    {"TISS-Details Link                                     TissDetail"}
+                </Typography>
+                <Typography variant="code">
+                    {"TISS-Calender original Description                    TissCalDesc"}
+                </Typography>
+                <Typography variant="code">
+                    {"Room Name (Ausgeschriebener Raum Name)                RoomName"}
+                </Typography>
+                <Typography variant="code">
+                    {"Room TISS-Raumbelegung Link                           RoomTiss"}
+                </Typography>
+                <Typography variant="code">
+                    {"Room TUW-Maps Link                                    RoomTuwMap"}
+                </Typography>
+                <Typography variant="code">
+                    {'Room Gebäude Addresse (z.B. "Getreidemarkt 9")        RoomBuildingAddress'}
+                </Typography>
+                <Typography variant="code">
+                    {"StartDate formated as (dd-MM-YYYY)                    StartDate"}
+                </Typography>
+                <Typography variant="code">
+                    {"StartTime formated as (hh:mm)                         StartTime"}
+                </Typography>
+                <Typography variant="code">
+                    {"EndDate formated as (dd-MM-YYYY)                      EndDate"}
+                </Typography>
+                <Typography variant="code">
+                    {"EndTime formated as (hh:mm)                           EndTime"}
+                </Typography>
+                <Typography variant="code">
+                    {
+                        'LVA Name (z.B. "Algebra und Diskrete Mathematik für Informatik und Wirtschaftsinformatik")    LvaName'
+                    }
+                </Typography>
+                <Typography variant="code">
+                    {
+                        'LVA Typ kurz (z.B. "VO", "UE", "VU", ...)                                                     LvaTypeShort'
+                    }
+                </Typography>
+                <Typography variant="code">
+                    {
+                        'LVA Typ lang (z.B. "Vorlesung", "Übung", "Vorlesung mit Übung")                               LvaTypeLong'
+                    }
+                </Typography>
+                <Typography variant="code">
+                    {
+                        'LVA ID (z.B. "104.265")                                                                       LvaId'
+                    }
+                </Typography>
             </Box>
             <Box
                 sx={{

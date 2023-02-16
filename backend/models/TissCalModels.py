@@ -66,7 +66,11 @@ class TissCalDataResponse(TissCalResponse):
     pass
 
 
-class TissCalUpdateRequest(_TissCalBase):
+class TissCalChangeRequest(_TissCalBase):
+    pass
+
+
+class TissCalChangeResponse(TissCalResponse):
     pass
 
 
