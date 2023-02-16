@@ -48,6 +48,7 @@ function CalendarEdit({}) {
                     console.error(data?.message);
                     addError(data?.message);
                 } else {
+                    data.all_events = _.sortBy(data.all_events, ["name"])
                     setCalendar(data);
                     setOldCalendar(data);
                 }
@@ -72,6 +73,7 @@ function CalendarEdit({}) {
                     console.error(data?.message);
                     addError(data?.message);
                 } else {
+                    data.all_events = _.sortBy(data.all_events, ["name"])
                     setCalendar(data);
                     setOldCalendar(data);
                     addSuccess("Calendar updated!");
@@ -92,6 +94,7 @@ function CalendarEdit({}) {
                     console.error(data?.message);
                     addError(data?.message);
                 } else {
+                    data.all_events = _.sortBy(data.all_events, ["name"])
                     setCalendar(data);
                     setOldCalendar(data);
                     addSuccess("Calendar updated from source!");
