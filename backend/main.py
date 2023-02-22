@@ -209,6 +209,15 @@ async def get_calender_by_token(token: str, response: Response):
     return StreamingResponse(iter([new_cal_stream.getvalue()]), media_type="text/calendar")
 
 
+@app.get("/api/cal/{token}/string", status_code=200)
+async def get_calender_by_token_string(token: str, response: Response):
+    cal = tiss_cal_handler.prettify_calendar(token)
+    if cal is None:
+        raise MyHTTPException(status_code=404, detail="Something went wrong (aka. no calendar for you) :I")
+    
+    return cal
+
+
 @app.get("/api/cal/update/{token}", response_model=TissCalUpdateResponse, status_code=200)
 async def update_calender_by_token(token: str, response: Response, current_user: UserDB = Depends(verify_token)):
     # TODO Check if user is owner

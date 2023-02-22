@@ -1,3 +1,4 @@
+import hashlib
 import requests
 from icalendar.cal import Calendar, Event
 
@@ -73,6 +74,12 @@ class MyCalendar:
             # Summary needs to be set last!!!
             summary_format = summary_template
             lva.set_summary(summary_format)
+    
+    def update_event_uids(self):
+        for event in self.get_all_events():
+            nice = event["SUMMARY"] + event["DESCRIPTION"] + event["DTSTART"] + event["DTEND"] + event["LOCATION"]
+            hash = hashlib.sha1(nice.encode()).hexdigest()
+            event["UID"] = hash
 
     def to_ical(self):
         return self.cal.to_ical().decode("utf-8")

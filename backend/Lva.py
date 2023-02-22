@@ -7,7 +7,7 @@ from jinja2 import BaseLoader, Environment
 
 
 @cache
-def read_rooms(file="resources\TU-Rooms.csv"):
+def read_rooms(file="resources/TU-Rooms.csv"):
     # TODO: Maybe move this also to a database
     with open(file, "r", encoding="UTF-8") as csvfile:
         reader = csv.reader(csvfile, delimiter=";")

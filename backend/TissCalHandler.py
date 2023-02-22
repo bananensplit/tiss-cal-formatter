@@ -123,6 +123,7 @@ class TissCalHandler:
             )
             cal.prettify_events_by_name(event.name, location_template, description_template, summary_template)
 
+        cal.update_event_uids()
         return cal.to_ical()
 
     def update_calendar_from_source(self, token: str) -> TissCalDB | None:
