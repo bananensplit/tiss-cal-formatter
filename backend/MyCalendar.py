@@ -80,11 +80,11 @@ class MyCalendar:
             nice = (
                 str(event.get("SUMMARY", ""))
                 + str(event.get("DESCRIPTION", ""))
-                + str(event.get("DTSTART", ""))
-                + str(event.get("DTEND", ""))
+                + str(event.get("DTSTART", "").dt.strftime("%d%m%Y %H%M"))
+                + str(event.get("DTEND", "").dt.strftime("%d%m%Y %H%M"))
                 + str(event.get("LOCATION", ""))
             )
-            hash = hashlib.sha1(nice.encode()).hexdigest()
+            hash = hashlib.sha256(nice.encode()).hexdigest()
             event["UID"] = hash
 
     def to_ical(self):
