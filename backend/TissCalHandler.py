@@ -5,7 +5,7 @@ import string
 from bson.objectid import ObjectId
 
 from Lva import Lva
-from models.TissCalModels import TissCalDB, TissCalDBCreate
+from models.TissCalModels import _TissCalEventModel, TissCalDB, TissCalDBCreate
 from MyCalendar import MyCalendar
 from MyMongoClient import MyMongoClient
 from UserHandler import UserHandler
@@ -140,15 +140,15 @@ class TissCalHandler:
             if event_name in old_cal_event_names:
                 continue
             old_cal_data.all_events.append(
-                {
-                    "name": event_name,
-                    "will_prettify": Lva.is_lva_str(event_name),
-                    "will_remove": False,
-                    "is_lva": Lva.is_lva_str(event_name),
-                    "summaryFormat": None,
-                    "locationFormat": None,
-                    "descriptionFormat": None,
-                }
+                _TissCalEventModel(
+                    name=event_name,
+                    will_prettify=Lva.is_lva_str(event_name),
+                    will_remove=False,
+                    is_lva=Lva.is_lva_str(event_name),
+                    summaryFormat=None,
+                    locationFormat=None,
+                    descriptionFormat=None,
+                )
             )
 
         return self.update_calendar(old_cal_data)
