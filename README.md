@@ -52,7 +52,7 @@ docker-compose up -d
 
 This will start the whole project with the default parameters:
 The webinterface will be available under `http://localhost:8111` and the API under `http://localhost:8111/api`.
-If you want to change the default parameters, go to [#advanced-installation].
+If you want to change the default parameters, go to the [Advanced installation](#advanced-installation) section.
 
 
 
@@ -61,14 +61,13 @@ If you want to change the default parameters, go to [#advanced-installation].
 
 This are instructions for people who want to change the default parameters of the installation.
 This section is designated for people who know what they are doing and have at least a base knowledge of `docker` and `docker compose` and are familiar with how it works.
-If you are not familiar with `docker` and `docker compose`, i would recommend to go to [#installation].
+If you are not familiar with `docker` and `docker compose`, i would recommend to go to [installation](#installation).
 
 
 ### Using `docker compose` with custom parameters
 
-This will start the whole project with the default parameters:
-The webinterface will be available under `http://localhost:8111` and the API under `http://localhost:8111/api`.
-If you want to change the default parameters, go to [#advanced-installation].
+By default the webinterface will be available under `http://localhost:8111` and the API under `http://localhost:8111/api`.
+If you want to change this behaviour the following information is for you.
 
 If you want to change this default parameters, you can do so by editing the `docker-compose.yml` file.
 * `BASE_URL`: is the base url of the webinterface. If you want to access the webinterface and the api under `http://localhost:8111/tisscal`, you have to set `BASE_URL` to `/tisscal`.
