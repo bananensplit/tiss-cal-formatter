@@ -244,7 +244,7 @@ Jeremiasz Zrolka - jeremiasz.zrolka@gmail.com
 [issues-shield]: https://img.shields.io/github/issues/bananensplit/tiss-cal-formatter.svg
 [issues-url]: https://github.com/bananensplit/tiss-cal-formatter/issues
 [license-shield]: https://img.shields.io/github/license/bananensplit/tiss-cal-formatter.svg
-[license-url]: https://github.com/bananensplit/tiss-cal-formatter/blob/master/LICENSE.txt
+[license-url]: https://github.com/bananensplit/tiss-cal-formatter/blob/master/LICENSE.md
 [linkedin-shield]: https://img.shields.io/badge/-LinkedIn-black.svg?logo=linkedin&colorB=555
 [linkedin-url]: https://www.linkedin.com/in/jeremiasz-zrolka-78431021b
 [twitter-url]: https://twitter.com/jeremiasz_z
