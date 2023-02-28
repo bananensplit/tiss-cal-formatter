@@ -130,7 +130,7 @@ class Lva:
         start_date, start_time = ical_event["dtstart"].dt.strftime("%d.%m.%Y %H:%M").split(" ")
         end_date, end_time = ical_event["dtend"].dt.strftime("%d.%m.%Y %H:%M").split(" ")
 
-        tiss_course_detail_link = f'https://tiss.tuwien.ac.at/course/event/courseDetails.xhtml?courseNr={lva_id.replace(".", "")}'
+        tiss_course_detail_link = f'https://tiss.tuwien.ac.at/course/courseDetails.xhtml?courseNr={lva_id.replace(".", "")}'
         tiss_education_detail_link = f'https://tiss.tuwien.ac.at/course/educationDetails.xhtml?courseNr={lva_id.replace(".", "")}'
         tiss_cal_desc = ical_event["description"]
 
