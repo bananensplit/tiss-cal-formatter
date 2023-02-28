@@ -40,12 +40,14 @@ class Lva:
         "StartTime",
         "EndDate",
         "EndTime",
-        "TissDetail",
+        "TissCourseDetailLink",
+        "TissEducationDetailLink",
         "TissCalDesc",
         "RoomName",
         "RoomTiss",
         "RoomTuwMap",
         "RoomBuildingAddress",
+        "Categorie",
     ]
 
     LVA_TYPE_MAP = {
@@ -128,8 +130,11 @@ class Lva:
         start_date, start_time = ical_event["dtstart"].dt.strftime("%d.%m.%Y %H:%M").split(" ")
         end_date, end_time = ical_event["dtend"].dt.strftime("%d.%m.%Y %H:%M").split(" ")
 
-        tiss_detail = f'https://tiss.tuwien.ac.at/course/event/courseDetails.xhtml?foreignId=2022W-{lva_id.replace(".", "")}'
+        tiss_course_detail_link = f'https://tiss.tuwien.ac.at/course/event/courseDetails.xhtml?courseNr={lva_id.replace(".", "")}'
+        tiss_education_detail_link = f'https://tiss.tuwien.ac.at/course/educationDetails.xhtml?courseNr={lva_id.replace(".", "")}'
         tiss_cal_desc = ical_event["description"]
+
+        categorie = str(ical_event["categories"].cats[0])
 
         room_data = get_room_data(ical_event.get("location", None))
         if room_data is not None:
@@ -157,12 +162,14 @@ class Lva:
             "StartTime": start_time,
             "EndDate": end_date,
             "EndTime": end_time,
-            "TissDetail": tiss_detail,
+            "TissCourseDetailLink": tiss_course_detail_link,
+            "TissEducationDetailLink": tiss_education_detail_link,
             "TissCalDesc": tiss_cal_desc,
             "RoomName": room_name,
             "RoomTiss": room_tiss,
             "RoomTuwMap": room_tuw_map,
             "RoomBuildingAddress": room_building_address,
+            "Categorie": categorie,
         }
 
         return cls(props, ical_event)

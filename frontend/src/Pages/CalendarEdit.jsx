@@ -191,10 +191,16 @@ function CalendarEdit({}) {
                     {"Description                                           Variable"}
                 </Typography>
                 <Typography variant="code">
-                    {"TISS-Details Link                                     TissDetail"}
+                    {"TISS-Details Link (/courseDetails)                    TissCourseDetailLink"}
+                </Typography>
+                <Typography variant="code">
+                    {"TISS-Details Link (/eductaionDetails)                 TissEductionDetailLink"}
                 </Typography>
                 <Typography variant="code">
                     {"TISS-Calender original Description                    TissCalDesc"}
+                </Typography>
+                <Typography variant="code">
+                    {"Category of the Event (\"EXAM\"|\"COURSE\"|\"GROUP\")       Category"}
                 </Typography>
                 <Typography variant="code">
                     {"Room Name (Ausgeschriebener Raum Name)                RoomName"}

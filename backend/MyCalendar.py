@@ -40,8 +40,11 @@ class MyCalendar:
 
     def prettify_events_by_name(self, name, location_template, description_template, summary_template):
         # Format Properties:
-        # TISS-Details Link                                     TissDetail
+        # TISS-Details Link (/courseDetails)                    TissCourseDetailLink
+        # TISS-Details Link (/eductaionDetails)                 TissEductionDetailLink
         # TISS-Calender original Description                    TissCalDesc
+
+        # Category of the Event ("EXAM"|"COURSE"|"GROUP")       Category
 
         # Room Name (Ausgeschriebener Raum Name)                RoomName
         # Room TISS-Raumbelegung Link                           RoomTiss
@@ -57,6 +60,7 @@ class MyCalendar:
         # LVA Typ kurz (z.B. "VO", "UE", "VU", ...)                                                     LvaTypeShort
         # LVA Typ lang (z.B. "Vorlesung", "Übung", "Vorlesung mit Übung")                               LvaTypeLong
         # LVA ID (z.B. "104.265")                                                                       LvaId
+
 
         # TODO:
         # Default Template (inserts the default template)

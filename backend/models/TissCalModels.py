@@ -15,11 +15,11 @@ class _TissCalEventModel(BaseModel):
 
 
 class _TissCalDefaultTemplateModel(BaseModel):
-    defaultSummaryFormat: str = "{{LvaTypeShort}} {{LvaName}}"
+    defaultSummaryFormat: str = '{% if "EXAM" == Categorie %}📝 {% elif "COURSE" == Categorie %}🏫 {% elif "GROUP" == Categorie %}👥 {% endif %}{{LvaTypeShort}} {{LvaName}}'
     defaultLocationFormat: str = "{{RoomBuildingAddress}}"
     defaultDescriptionFormat: str = """<b>{{LvaName}}</b>
 Typ: <b>{{LvaTypeShort}}</b> ({{LvaTypeLong}})
-Details: <b><a href="{{TissDetail}}">TISS</a></b>
+Details: <b><a href="{{TissCourseDetailLink}}">TISS</a></b>
 Raum: <b>{{RoomName}}</b>, <a href="{{RoomTiss}}">TISS</a>, <a href="{{RoomTuwMap}}">TU-Wien Maps</a>
 Full-Name: {{LvaId}} {{LvaTypeShort}} {{LvaName}}
 <br>
