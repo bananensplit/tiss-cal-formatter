@@ -1,6 +1,7 @@
 version: "3.9"
 services:
   api:
+    restart: "unless-stopped"
     build:
       context: .
       args:
@@ -20,6 +21,7 @@ services:
       - db
   
   db:
+    restart: "unless-stopped"
     image: mongo
     networks:
       net:
@@ -31,6 +33,7 @@ services:
       - "db-volume:/data/db"
 
   redis:
+    restart: "unless-stopped"
     image: redis
     networks:
       net:
