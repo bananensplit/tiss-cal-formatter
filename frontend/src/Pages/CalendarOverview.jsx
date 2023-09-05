@@ -14,7 +14,6 @@ function CalendarOverview({}) {
     const [createCalDialog, setCreateCalDialog] = useState(false);
 
     useEffect(() => fetchCalendars(), []);
-    useEffect(() => {}, [createCalDialog]);
 
     function fetchCalendars() {
         setLoading(true);
@@ -48,15 +47,33 @@ function CalendarOverview({}) {
                 padding: 2,
             }}
         >
-            {calendars.map((calendar) => (
-                <CalendarSummary
-                    key={calendar?.token}
-                    name={calendar?.name}
-                    url={calendar?.url}
-                    token={calendar?.token}
-                    reloadCalendars={fetchCalendars}
-                />
-            )) || <Typography variant="body2">No calendars found :I</Typography>}
+            {(calendars.length > 0 &&
+                calendars.map((calendar) => (
+                    <CalendarSummary
+                        key={calendar?.token}
+                        name={calendar?.name}
+                        url={calendar?.url}
+                        token={calendar?.token}
+                        reloadCalendars={fetchCalendars}
+                    />
+                ))) || (
+                <Box
+                    sx={{
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        height: "100%",
+                        width: "100%",
+                        padding: 2,
+                    }}
+                >
+                    <Typography variant="h3">No calendars found :I</Typography>
+                    <Typography variant="body2">
+                        To create a calendar click on the '+' in the bottom right corner.
+                    </Typography>
+                </Box>
+            )}
 
             <Fab
                 color="secondary"
