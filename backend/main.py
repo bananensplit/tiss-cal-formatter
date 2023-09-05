@@ -158,11 +158,13 @@ async def logout(response: Response, current_user: UserDB = Depends(verify_token
 
 
 @app.post("/api/user/create", response_model=UserCreateResponse, status_code=200)
-async def create_user(request: UserCreateRequest):
+async def create_user(request: UserCreateRequest, response: Response):
     if user_handler.check_if_user_exists(request.username):
         raise MyHTTPException(status_code=400, detail="User already exists")
     if not user_handler.create_user(request.username, request.password):
         raise MyHTTPException(status_code=400, detail="Can't create user :I")
+    token = user_handler.login(request.username, request.password)
+    response.set_cookie(key="token", value=token, max_age=60 * 60, httponly=True, samesite="none", secure=True)
     return UserCreateResponse(username=request.username)
 
 
