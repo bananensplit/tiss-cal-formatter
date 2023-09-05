@@ -25,15 +25,9 @@ function CalendarSummary({ name, url, token, reloadCalendars }) {
 
     function deleteCalendar() {
         setLoading(true);
-        fetch(
-            `${import.meta.env.BASE_URL.replace(
-                /\/+$/,
-                ""
-            )}/api/cal/delete/${token}`,
-            {
-                credentials: "include",
-            }
-        )
+        fetch(`${import.meta.env.BASE_URL.replace(/\/+$/, "")}/api/cal/delete/${token}`, {
+            credentials: "include",
+        })
             .then((response) => response.json())
             .then((data) => {
                 if (data?.metadata?.error) {
@@ -58,9 +52,7 @@ function CalendarSummary({ name, url, token, reloadCalendars }) {
                 <Typography variant="h4" sx={{ flexGrow: 1 }}>
                     {name || "-"}
                 </Typography>
-                <IconButton
-                    onClick={() => navigate(`/calendars/edit/${token}`)}
-                >
+                <IconButton onClick={() => navigate(`/calendars/edit/${token}`)}>
                     <EditRoundedIcon />
                 </IconButton>
                 <IconButton onClick={() => setDeleteCalDialog(true)}>
@@ -69,35 +61,23 @@ function CalendarSummary({ name, url, token, reloadCalendars }) {
             </Box>
             <Box>
                 <CopyElement copyText={url || ""}>
-                    <Typography
-                        variant="subtitle"
-                        sx={{ fontFamily: "monospace" }}
-                    >
-                        {(url && shortString(url)) || "-"}
-                    </Typography>
+                    <Typography variant="code">{(url && shortString(url)) || "-"}</Typography>
                 </CopyElement>
             </Box>
             <Box>
                 <CopyElement
                     copyText={
                         (token &&
-                            `${
-                                window.location.origin
-                            }${import.meta.env.BASE_URL.replace(
+                            `${window.location.origin}${import.meta.env.BASE_URL.replace(
                                 /\/+$/,
                                 ""
                             )}/api/cal/${token}`) ||
                         ""
                     }
                 >
-                    <Typography
-                        variant="subtitle"
-                        sx={{ fontFamily: "monospace" }}
-                    >
+                    <Typography variant="code">
                         {(token &&
-                            `${
-                                window.location.origin
-                            }${import.meta.env.BASE_URL.replace(
+                            `${window.location.origin}${import.meta.env.BASE_URL.replace(
                                 /\/+$/,
                                 ""
                             )}/api/cal/${token}`) ||

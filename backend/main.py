@@ -23,7 +23,7 @@ from models.TissCalModels import (
     TissCalChangeResponse,
     TissCalUpdateResponse,
 )
-from models.UserModels import UserDB, UserLoginRequest, UserLoginResponse, UserLogoutResponse, UserResponse
+from models.UserModels import UserCreateRequest, UserCreateResponse, UserDB, UserDeleteResponse, UserLoginRequest, UserLoginResponse, UserLogoutResponse, UserResponse
 from MyCalendar import MyCalendar
 from MyHTTPException import MyHTTPException
 from TissCalHandler import TissCalHandler
@@ -109,6 +109,7 @@ def my_http_exception_handler(request: Request, exc: HTTPException):
 def verify_token(token: str = Security(api_key_cookie)) -> UserDB | None:
     if not user_handler.check_login(token=token):
         raise MyHTTPException(status_code=401, detail="Request not authenticated")
+    user_handler.refresh_session(token=token)
     uid = user_handler.get_session(token=token)[1]
     return user_handler.get_user_by_uid(uid)
 
@@ -154,6 +155,24 @@ async def logout(response: Response, current_user: UserDB = Depends(verify_token
     user_handler.logout(str(current_user.uid))
     response.delete_cookie(key="token")
     return {}
+
+
+@app.post("/api/user/create", response_model=UserCreateResponse, status_code=200)
+async def create_user(request: UserCreateRequest):
+    if user_handler.check_if_user_exists(request.username):
+        raise MyHTTPException(status_code=400, detail="User already exists")
+    if not user_handler.create_user(request.username, request.password):
+        raise MyHTTPException(status_code=400, detail="Can't create user :I")
+    return UserCreateResponse(username=request.username)
+
+
+@app.get("/api/user/delete", response_model=UserDeleteResponse, status_code=200)
+async def delete_user(current_user: UserDB = Depends(verify_token)):
+    cals = tiss_cal_handler.get_calendars_by_owner(str(current_user.uid))
+    for cal in cals:
+        tiss_cal_handler.delete_calendar_by_id(cal.id)
+    user_handler.delete_user_by_uid(str(current_user.uid))
+    return UserDeleteResponse()
 
 
 @app.post("/api/cal/create", response_model=TissCalCreateResponse, status_code=200)

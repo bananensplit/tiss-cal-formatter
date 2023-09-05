@@ -46,10 +46,28 @@ const theme = createTheme({
         code: {
             fontSize: "1em",
             fontFamily: "monospace",
-            whiteSpace: "pre",
-        }
+            whiteSpace: "pre-wrap",
+            background: "#d5d5d5",
+            padding: "0.2em",
+            borderRadius: "5px",
+        },
+        codeBlock: {
+            fontSize: "1em",
+            fontFamily: "monospace",
+            whiteSpace: "pre-wrap",
+            background: "#d5d5d5",
+            padding: "0.2em",
+            borderRadius: "5px",
+        },
     },
     components: {
+        MuiTypography: {
+            defaultProps: {
+                variantMapping: {
+                    codeBlock: "div",
+                },
+            },
+        },
         MuiTextField: {
             defaultProps: {
                 size: "small",
@@ -67,6 +85,11 @@ const theme = createTheme({
             },
         },
         MuiFab: {
+            defaultProps: {
+                size: "small",
+            },
+        },
+        MuiChip: {
             defaultProps: {
                 size: "small",
             },

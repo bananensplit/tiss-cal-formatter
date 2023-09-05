@@ -1,4 +1,5 @@
 import ExpandMoreRoundedIcon from "@mui/icons-material/ExpandMoreRounded";
+import Chip from "@mui/material/Chip";
 import Box from "@mui/material/Box";
 import Collapse from "@mui/material/Collapse";
 import Divider from "@mui/material/Divider";
@@ -64,11 +65,8 @@ function EventEdit({ eventData, onEdit, defaultTemplates }) {
                 <Typography variant="body1" sx={{ justifySelf: "flex-start" }}>
                     {eventData?.name || "-"}
                 </Typography>
-                <Switch
-                    checked={is_lva}
-                    onChange={(event) => setIsLva(event.target.checked)}
-                    disabled
-                />
+                <Chip label="LVA-detected" color="primary" disabled={!is_lva} />
+                
                 <Switch
                     checked={will_prettify}
                     onChange={(event) => setWillPrettify(event.target.checked)}

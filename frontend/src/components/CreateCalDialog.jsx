@@ -4,7 +4,9 @@ import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import DialogContentText from "@mui/material/DialogContentText";
 import DialogTitle from "@mui/material/DialogTitle";
+import Link from "@mui/material/Link";
 import TextField from "@mui/material/TextField";
+import Typography from "@mui/material/Typography";
 import { useEffect, useRef, useState } from "react";
 import useFeedbackMachine from "../FeedbackMachine/useFeedbackMachine";
 
@@ -32,10 +34,7 @@ function CreateCalDialog({ open, onClose, reloadCalendars }) {
             setCalUrlError("Has to be a valid URL!");
         } else setCalUrlError(false);
 
-        return (
-            calNameRef.current.checkValidity() &&
-            calUrlRef.current.checkValidity()
-        );
+        return calNameRef.current.checkValidity() && calUrlRef.current.checkValidity();
     }
 
     function createCalendar(event) {
@@ -66,19 +65,29 @@ function CreateCalDialog({ open, onClose, reloadCalendars }) {
             })
             .catch((error) => {
                 console.error(error);
-                addError("Something went wrong :(")
+                addError("Something went wrong :(");
             })
             .finally(() => setLoading(false));
     }
 
     return (
         <Dialog open={open} onClose={() => onClose()}>
-            <DialogTitle sx={{ fontSize: "15px" }}>
-                Create new Calendar...
-            </DialogTitle>
+            <DialogTitle sx={{ fontSize: "15px" }}>Create new Calendar...</DialogTitle>
             <DialogContent>
                 <DialogContentText>
-                    Please enter the name and URL of the calendar you want.
+                    <Typography variant="body1" gutterBottom>
+                        Please enter the name and URL of your calendar.
+                    </Typography>
+                    <Typography variant="body1">
+                        The calendar name can be anything you want.
+                    </Typography>
+                    <Typography variant="body1">
+                        The calendar URL has to be your TISS-Calendar URL. You can get it from{" "}
+                        <Link href="https://tiss.tuwien.ac.at/events/personSchedule.xhtml">
+                            here
+                        </Link>
+                        .
+                    </Typography>
                 </DialogContentText>
                 <TextField
                     sx={{ mt: 2 }}

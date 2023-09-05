@@ -1,6 +1,7 @@
 import hashlib
 import logging
 import random
+import re
 import string
 
 import redis
@@ -20,6 +21,7 @@ class UserHandler:
         redis_host: str = "localhost",
         redis_port: int = 6379,
         redis_password: str | None = None,
+        redis_expire: int = 10800,
     ):
         self.logger = logger
 
@@ -29,6 +31,7 @@ class UserHandler:
         self.redis_host = redis_host
         self.redis_port = redis_port
         self.redis_password = redis_password
+        self.redis_expire = redis_expire if redis_expire > 0 else None
 
         self.logger.info("Initializing UserHandler")
         self.logger.debug("    Mongo connection string: %s", self.connection_string)
@@ -37,6 +40,7 @@ class UserHandler:
         self.logger.debug("    Redis host:              %s", self.redis_host)
         self.logger.debug("    Redis port:              %s", self.redis_port)
         self.logger.debug("    Redis password:          %s", self.redis_password)
+        self.logger.debug("    Redis expire:            %s", self.redis_expire)
 
         with self._get_mongo_connection() as client:
             if not client.check_connection():
@@ -103,8 +107,8 @@ class UserHandler:
 
         session_token = self.generate_session_token()
         with self._get_redis_connection() as client:
-            client.set(session_token, str(user.uid))
-            client.set(str(user.uid), session_token)
+            client.set(session_token, str(user.uid), ex=self.redis_expire)
+            client.set(str(user.uid), session_token, ex=self.redis_expire)
         self.logger.info("Login: User %s logged in, returning session token: %s", username, session_token)
 
         return session_token
@@ -120,7 +124,7 @@ class UserHandler:
         """
         self.logger.info("Logout: Logging out user %s", uid)
         if not self.check_login(uid=uid):
-            self.logger.info("Logout: User was never logged in: %s", uid)
+            self.logger.info("Logout: User was never logged in or session already expired: %s", uid)
             return True
 
         with self._get_redis_connection() as client:
@@ -136,7 +140,7 @@ class UserHandler:
             client.flushdb()
 
     def check_login(self, token: str = None, uid: str = None, username: str = None) -> bool:
-        """Checks if a user is logged in / if a session in the database exists with the given token or uid. 
+        """Checks if a user is logged in / if a session in the database exists with the given token or uid.
         Only one of the arguments should be set. If multiple are set, the first one is used.
 
         Keyword Arguments:
@@ -148,6 +152,43 @@ class UserHandler:
             bool -- Returns True if the user is logged in (a session exists), False otherwise
         """
         return self.get_session(token, uid, username) is not None
+
+    def refresh_session(self, token: str = None, uid: str = None, username: str = None) -> tuple[str] | None:
+        """Refreshes the session of a user. If the user is not logged in, None is returned.
+        Only one of the arguments should be set. If multiple are set, the first one is used.
+
+        Keyword Arguments:
+            token {str} -- token of the login session (default: {None})
+            uid {str} -- uid of the logged in user (default: {None})
+            username {str} -- username of the logged in user (default: {None})
+
+        Returns:
+            tuple[str] | None -- Returns a tuple of the session token and uid if the user is logged in, None otherwise
+        """
+        with self._get_redis_connection() as client:
+            if token is not None:
+                self.logger.debug("Refreshing session by token: %s", token)
+                uid = client.get(token)
+
+            elif uid is not None:
+                self.logger.debug("Refreshing session by uid: %s", uid)
+                token = client.get(uid)
+
+            elif username is not None:
+                self.logger.debug("Refreshing session by username: %s", username)
+                user = self.get_user_by_username(username)
+                if user is not None:
+                    uid = str(user.uid)
+                    token = client.get(uid)
+
+            if uid is None or token is None:
+                self.logger.debug("Refreshing session: Session not found")
+                return None
+
+            client.expire(uid, self.redis_expire)
+            client.expire(token, self.redis_expire)
+            self.logger.debug("Refreshing session: Session refreshed")
+            return token
 
     def get_session(self, token: str = None, uid: str = None, username: str = None) -> tuple[str] | None:
         """Returns the session token and uid of a logged in user. If the user is not logged in, None is returned.
@@ -201,6 +242,15 @@ class UserHandler:
         """
         self.logger.info("Creating user: username: %s", username)
         usernameLower = username.lower()
+
+        if re.match(r"^[.a-zA-Z0-9@_-]{8,40}$", username) is None:
+            self.logger.info("Creating user failed: Username does not match ^[.a-zA-Z0-9@_-]{8,40}$")
+            return None
+
+        if len(password) < 8:
+            self.logger.info("Creating user failed: Password is too short (min 8 characters)")
+            return None
+
         if self.get_user_by_username(usernameLower) is not None:
             self.logger.info("Creating user failed: User already exists (%s)", username)
             return None
@@ -221,6 +271,9 @@ class UserHandler:
                 usernameLower=usernameLower,
                 password=password,
             )
+
+    def check_if_user_exists(self, username: str) -> bool:
+        return self.get_user_by_username(username) is not None
 
     def delete_user_by_uid(self, uid: str):
         """Deletes a user by its uid

@@ -40,3 +40,19 @@ class UserLoginResponse(UserResponse):
 
 class UserLogoutResponse(ResponseBase):
     message: str = Field(default="Successfully logged out")
+
+
+class UserCreateRequest(__UserBase):
+    pass
+
+
+class UserCreateResponse(ResponseBase):
+    pass
+
+
+class UserDeleteRequest(__UserBase):
+    pass
+
+
+class UserDeleteResponse(ResponseBase):
+    message: str = Field(default="Successfully deleted user")

@@ -6,13 +6,13 @@ import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import useFeedbackMachine from "../FeedbackMachine/useFeedbackMachine";
 import useAuth from "../AuthContext/useAuth";
+import useFeedbackMachine from "../FeedbackMachine/useFeedbackMachine";
 
 function Login({}) {
     const navigate = useNavigate();
     const { setLoading, loading, addSuccess, addError } = useFeedbackMachine();
-    const { setUser, user, loggedIn } = useAuth();
+    const { login, logout, user, loggedIn, initialLoginCheck } = useAuth();
 
     const [usernameError, setUsernameError] = useState(false);
     const [passwordError, setPasswordError] = useState(false);
@@ -41,7 +41,7 @@ function Login({}) {
                     setUsernameError(data?.message);
                     setPasswordError(data?.message);
                 } else {
-                    setUser(data);
+                    login(data);
                     navigate("/calendars");
                 }
             })
@@ -51,8 +51,7 @@ function Login({}) {
 
     function checkValidity() {
         if (!usernameRef.current.checkValidity()) {
-            if (usernameRef.current.value === "")
-                setUsernameError("Is required!");
+            if (usernameRef.current.value === "") setUsernameError("Is required!");
             else setUsernameError("Needs to pass [.a-zA-Z0-9@-_]*");
         } else setUsernameError(false);
 
@@ -60,12 +59,8 @@ function Login({}) {
             setPasswordError("Is required!");
         } else setPasswordError(false);
 
-        return (
-            usernameRef.current.checkValidity() &&
-            passwordRef.current.checkValidity()
-        );
+        return usernameRef.current.checkValidity() && passwordRef.current.checkValidity();
     }
-    
 
     return (
         <Box
@@ -119,11 +114,7 @@ function Login({}) {
                     required
                     type="password"
                 />
-                <Button
-                    variant="outlined"
-                    sx={{ width: "100px", mt: 5 }}
-                    onClick={submitLogin}
-                >
+                <Button variant="outlined" sx={{ width: "100px", mt: 5 }} onClick={submitLogin}>
                     Login
                 </Button>
                 <Typography sx={{ mt: 2 }} variant="caption">
