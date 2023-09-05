@@ -107,7 +107,7 @@ function TemplateBanana({ theme = null, style, children }) {
                         </a>
                         <a
                             className="github"
-                            href="https://github.com/bananensplit"
+                            href="https://github.com/bananensplit/tiss-cal-formatter"
                         >
                             <svg
                                 xmlns="http://www.w3.org/2000/svg"
