@@ -56,7 +56,7 @@ function Login({}) {
 
         if (!usernameRef.current.checkValidity()) {
             if (usernameRef.current.value === "") setUsernameError("Is required!");
-            else setUsernameError("Needs to pass [-.a-zA-Z0-9@_]{8,30}");
+            else setUsernameError("Needs to pass [.a-zA-Z0-9@_\-]{8,40}");
             valid = false;
         } else setUsernameError(false);
 
@@ -114,7 +114,7 @@ function Login({}) {
                     helperText={usernameError && usernameError}
                     required
                     inputProps={{
-                        pattern: "[-.a-zA-Z0-9@_]{8,30}",
+                        pattern: "[.a-zA-Z0-9@_\-]{8,40}",
                     }}
                 />
                 <TextField
