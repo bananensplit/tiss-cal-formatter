@@ -33,6 +33,33 @@ Converts this event:       |  Into this event:
 
 
 
+## How to use?
+> As of now the website is not mobile-optimized. I recommend using it on a laptop or pc.
+
+### Create an account
+1. Go to https://bananensplit.com/tisscal/register
+2. Choose a username
+3. Choose a password and retype the password. Please don't forget it, There is currently no way of resetting or changing your password.
+4. Click on `Register`
+5. When all went right, you should now be redirected to https://bananensplit.com/tisscal/calendars
+
+### Create your calendar
+1. Click on the '+' in the bottom right corner of the screen.
+2. Enter a name for the calendar. This name is only for your convenience, so you can type whatever you want as long as you consider it useful.
+3. Enter the Link
+	1. Go to https://tiss.tuwien.ac.at/events/personSchedule.xhtml
+	2. Scroll down. There should be a link that looks something like `https://tiss.tuwien.ac.at/events/rest/calendar/personal?locale=de&token=....`
+	3. Copy this link and enter it in the textfield
+4. Press `Submit`
+5. If all went ok, you should be now able to see a box with two links and the name you typed.
+
+### Get the formatted calendar
+1. The formatted calendar is now provided to you via the second link as an `.ics` file (`https://bananensplit.com/tisscal/api/cal/***************************`)
+2. Copy this link and paste it into your browser's searchbar to download the file or import it as an [iCal feed to the calendar of your choice](https://help.hospitable.com/en/articles/4605516-how-can-i-add-the-ical-feed-to-the-calendar-on-my-device)
+
+
+
+
 ## Installation
 
 > **Note:** You need to have [Docker](https://www.docker.com/) installed on your machine. For windows you can use [Docker Desktop](https://www.docker.com/products/docker-desktop).
