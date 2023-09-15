@@ -12,10 +12,10 @@
 
 ## A formatter for the [TISS](https://tiss.tuwien.ac.at) calendar for all **TU Wien students**
 
-The [TISS](https://tiss.tuwien.ac.at) calendar provides a possibilty to download the events in the calendar as a `.ics` file. However the descriptions, locations and summary in this calendar are very short and not very useful.
-This is where the **Tiss-Calendar-Formatter** comes in. It provides you with a webinterface where you can edit the descriptions, locations and summary of the events in the calendar. After you are done editing the calendar, you can download the calendar as a `.ics` or add it to [your calendar application as a ical feed][import-ical-url].
+The [TISS](https://tiss.tuwien.ac.at) calendar provides a possibilty to download the events in the calendar as a `.ics` file. However the descriptions, locations and summary in this calendar are very short and particularly useful.
+This is where the **Tiss-Calendar-Formatter** comes in. It provides you with a webinterface where you can edit the descriptions, locations and summary of the events in the calendar. After you are done editing the calendar, you can download the calendar as a `.ics` or import it to [a calendar application of your choice as an ical feed][import-ical-url].
 
-This application is hosted at https://bananensplit.com/tisscal
+This project is hosted at https://bananensplit.com/tisscal
 
 You can...
 * ... set templates for the **summary** of the events
