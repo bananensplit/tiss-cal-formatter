@@ -38,7 +38,7 @@ class MyCalendar:
             if event.get("summary", "") == name:
                 self.cal.subcomponents.remove(event)
 
-    def prettify_events_by_name(self, name, location_template, description_template, summary_template):
+    def prettify_events_by_name(self, name, location_template, description_template, summary_template, calendar_type):
         # Format Properties:
         # TISS-Details Link (/courseDetails)                    TissCourseDetailLink
         # TISS-Details Link (/eductaionDetails)                 TissEductionDetailLink
@@ -73,7 +73,7 @@ class MyCalendar:
             lva.set_location(location_format)
 
             desc_format = description_template
-            lva.set_description(desc_format)
+            lva.set_description(desc_format, calendar_type)
 
             # Summary needs to be set last!!!
             summary_format = summary_template

@@ -2,8 +2,9 @@ import csv
 import re
 from functools import cache
 
-from icalendar.cal import Event
+from icalendar.cal import Event, Parameters
 from jinja2 import BaseLoader, Environment
+import urllib.parse
 
 
 @cache
@@ -87,18 +88,27 @@ class Lva:
         "ZU": "Zeichenübung",
     }
 
-    def __init__(self, properites, ical_event):
+    def __init__(self, properites, ical_event: Event):
         self.properties = properites
         self.ical_event = ical_event
 
-    def set_description(self, format):
-        self.ical_event["description"] = self._apply_format(format)
+    def set_description(self, format, calendar_type="google"):
+        applied_format = self._apply_format(format)
+        if calendar_type is None or calendar_type == "google":
+            self.ical_event["description"] = applied_format 
+        else: # technically other altreps are possible, but we only handle text/html currently
+            altrep_content = self._create_description_altrep_content(applied_format)
+            self.ical_event.add("description", applied_format, { "altrep" : altrep_content })
 
     def set_summary(self, format):
         self.ical_event["summary"] = self._apply_format(format)
 
     def set_location(self, format):
         self.ical_event["location"] = self._apply_format(format)
+
+    def _create_description_altrep_content(self, format):
+        uri_encoded = urllib.parse.quote(format)
+        return f'data:text/html,{uri_encoded}'
 
     def _apply_format(self, format):
         rtemplate = Environment(loader=BaseLoader()).from_string(format)

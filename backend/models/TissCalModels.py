@@ -13,7 +13,6 @@ class _TissCalEventModel(BaseModel):
     locationFormat: str = None
     descriptionFormat: str = None
 
-
 class _TissCalDefaultTemplateModel(BaseModel):
     defaultSummaryFormat: str = '{% if "EXAM" == Categorie %}📝 {% elif "COURSE" == Categorie %}🏫 {% elif "GROUP" == Categorie %}👥 {% endif %}{{LvaTypeShort}} {{LvaName}}'
     defaultLocationFormat: str = "{{RoomBuildingAddress}}"

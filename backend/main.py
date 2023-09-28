@@ -221,8 +221,8 @@ async def update_calender_data(request: TissCalChangeRequest, current_user: User
 
 
 @app.get("/api/cal/{token}", status_code=200)
-async def get_calender_by_token(token: str, response: Response):
-    cal = tiss_cal_handler.prettify_calendar(token)
+async def get_calender_by_token(token: str, calendarType: str, response: Response):
+    cal = tiss_cal_handler.prettify_calendar(token, calendarType)
     if cal is None:
         raise MyHTTPException(status_code=404, detail="Something went wrong (aka. no calendar for you) :I")
 
@@ -231,8 +231,8 @@ async def get_calender_by_token(token: str, response: Response):
 
 
 @app.get("/api/cal/{token}/string", status_code=200)
-async def get_calender_by_token_string(token: str, response: Response):
-    cal = tiss_cal_handler.prettify_calendar(token)
+async def get_calender_by_token_string(token: str, calendarType: str, response: Response):
+    cal = tiss_cal_handler.prettify_calendar(token, calendarType)
     if cal is None:
         raise MyHTTPException(status_code=404, detail="Something went wrong (aka. no calendar for you) :I")
     

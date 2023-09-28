@@ -10,8 +10,9 @@ import Link from "@mui/material/Link";
 import _ from "lodash";
 import TextField from "@mui/material/TextField";
 import Grid2 from "@mui/material/Unstable_Grid2/Grid2";
+import { InputLabel, MenuItem, Select } from "@mui/material";
 
-function CalendarEdit({}) {
+function CalendarEdit({ }) {
     const { token } = useParams();
     const { setLoading, loading, addSuccess, addError } = useFeedbackMachine();
     const [calendar, setCalendar] = useState(null);
@@ -20,6 +21,7 @@ function CalendarEdit({}) {
     const [defaultSummaryFormat, setDefaultSummaryFormat] = useState("");
     const [defaultLocationFormat, setDefaultLocationFormat] = useState("");
     const [defaultDescriptionFormat, setDefaultDescriptionFormat] = useState("");
+    const [calendarType, setCalendarType] = useState("google");
 
     useEffect(() => {
         fetchCalendar();
@@ -132,13 +134,11 @@ function CalendarEdit({}) {
     }
 
     function calendarLink() {
-        return (
-            (calendar?.token &&
-                `${window.location.origin}${import.meta.env.BASE_URL.replace(/\/+$/, "")}/api/cal/${
-                    calendar.token
-                }`) ||
-            ""
-        );
+        if(calendar?.token) {
+            return `${window.location.origin}${import.meta.env.BASE_URL.replace(/\/+$/, "")}/api/cal/${calendar.token}?calendarType=${calendarType}`;
+        }
+
+        return "";
     }
 
 
@@ -149,11 +149,25 @@ function CalendarEdit({}) {
                 <Typography variant="code">{calendar?.url}</Typography>
             </CopyElement>
             <br />
+
+            <Box sx={{ display: "flex", alignItems: "center"}}>
             <CopyElement copyText={calendarLink()}>
                 <Typography variant="code">
                     {calendarLink()}
                 </Typography>
             </CopyElement>
+            <Select
+                label="Calendar Type" 
+                value={calendarType} 
+                labelId="calendar-type-select-label" 
+                onChange={(event) => setCalendarType(event.target.value)}
+            >
+                <MenuItem value={"google"}>Google</MenuItem>
+                <MenuItem value={"thunderbird"}>Thunderbird</MenuItem>
+            </Select>
+
+            <InputLabel id="calendar-type-select-label">Calendar Type</InputLabel>
+            </Box>
             <br />
             <Box sx={{ display: "flex", mt: 1, gap: 2 }}>
                 <Button

@@ -92,7 +92,7 @@ class TissCalHandler:
             data = client.find({"owner": uid})
             return [TissCalDB(**d) for d in data]
 
-    def prettify_calendar(self, token: str) -> str | None:
+    def prettify_calendar(self, token: str, calendar_type: str) -> str | None:
         cal_data = self.update_calendar_from_source(token)
         if cal_data is None:
             return None
@@ -121,7 +121,7 @@ class TissCalHandler:
             summary_template = (
                 event.summaryFormat if event.summaryFormat is not None else cal_data.default_template.defaultSummaryFormat
             )
-            cal.prettify_events_by_name(event.name, location_template, description_template, summary_template)
+            cal.prettify_events_by_name(event.name, location_template, description_template, summary_template, calendar_type)
 
         cal.update_event_uids()
         return cal.to_ical()
