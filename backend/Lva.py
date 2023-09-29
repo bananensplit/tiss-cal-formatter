@@ -1,10 +1,10 @@
 import csv
 import re
+import urllib.parse
 from functools import cache
 
 from icalendar.cal import Event
 from jinja2 import BaseLoader, Environment
-import urllib.parse
 
 
 @cache
@@ -88,13 +88,14 @@ class Lva:
         "ZU": "Zeichenübung",
     }
 
-    def __init__(self, properites, ical_event):
+    def __init__(self, properites, ical_event: Event):
         self.properties = properites
         self.ical_event = ical_event
 
     def set_description(self, format):
         applied_format = self._apply_format(format)
         altrep_content = self._create_description_altrep_content(applied_format)
+        del self.ical_event["description"]
         self.ical_event.add("description", applied_format, { "altrep" : altrep_content })
 
     def set_summary(self, format):
