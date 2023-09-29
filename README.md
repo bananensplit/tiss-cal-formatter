@@ -218,7 +218,7 @@ docker run --name tisscal-mongo -d \
 
 # Setup Redis (hosts on port 8882)
 docker run --name tisscal-redis -d \
-    -p 8882:27017 \
+    -p 8882:6379 \
     redis
 
 # Start the backend
