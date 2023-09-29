@@ -4,6 +4,7 @@ from functools import cache
 
 from icalendar.cal import Event
 from jinja2 import BaseLoader, Environment
+import urllib.parse
 
 
 @cache
