@@ -92,13 +92,19 @@ class Lva:
         self.ical_event = ical_event
 
     def set_description(self, format):
-        self.ical_event["description"] = self._apply_format(format)
+        applied_format = self._apply_format(format)
+        altrep_content = self._create_description_altrep_content(applied_format)
+        self.ical_event.add("description", applied_format, { "altrep" : altrep_content })
 
     def set_summary(self, format):
         self.ical_event["summary"] = self._apply_format(format)
 
     def set_location(self, format):
         self.ical_event["location"] = self._apply_format(format)
+
+    def _create_description_altrep_content(self, format):
+        uri_encoded = urllib.parse.quote(format)
+        return f'data:text/html,{uri_encoded}'
 
     def _apply_format(self, format):
         rtemplate = Environment(loader=BaseLoader()).from_string(format)
