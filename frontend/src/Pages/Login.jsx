@@ -88,41 +88,41 @@ function Login({ }) {
                     ml: 6,
                     width: "250px",
                 }}
+                component="form"
+                onSubmit={(e) => e.preventDefault()}
             >
-                <form onSubmit={(e) => e.preventDefault()}>
-                    <TextField
-                        inputRef={usernameRef}
-                        id="username"
-                        label="Username"
-                        variant="standard"
-                        fullWidth
-                        error={usernameError && true}
-                        helperText={usernameError && usernameError}
-                        required
-                        inputProps={{
-                            pattern: "[.a-zA-Z0-9@-_]*",
-                        }}
-                    />
-                    <TextField
-                        sx={{ mt: 2 }}
-                        inputRef={passwordRef}
-                        id="password"
-                        label="Password"
-                        variant="standard"
-                        fullWidth
-                        error={passwordError && true}
-                        helperText={passwordError && passwordError}
-                        required
-                        type="password"
-                    />
-                    <Button type="submit" variant="outlined" sx={{ width: "100px", mt: 5 }} onClick={submitLogin}>
-                        Login
-                    </Button>
-                    <Typography sx={{ mt: 2 }} variant="caption">
-                        Don't have an account?{" "}
-                        <Link onClick={() => navigate("/register")}>Register</Link>
-                    </Typography>
-                </form>
+                <TextField
+                    inputRef={usernameRef}
+                    id="username"
+                    label="Username"
+                    variant="standard"
+                    fullWidth
+                    error={usernameError && true}
+                    helperText={usernameError && usernameError}
+                    required
+                    inputProps={{
+                        pattern: "[.a-zA-Z0-9@-_]*",
+                    }}
+                />
+                <TextField
+                    sx={{ mt: 2 }}
+                    inputRef={passwordRef}
+                    id="password"
+                    label="Password"
+                    variant="standard"
+                    fullWidth
+                    error={passwordError && true}
+                    helperText={passwordError && passwordError}
+                    required
+                    type="password"
+                />
+                <Button type="submit" variant="outlined" sx={{ width: "100px", mt: 5 }} onClick={submitLogin}>
+                    Login
+                </Button>
+                <Typography sx={{ mt: 2 }} variant="caption">
+                    Don't have an account?{" "}
+                    <Link onClick={() => navigate("/register")}>Register</Link>
+                </Typography>
             </Box>
         </Box>
     );
