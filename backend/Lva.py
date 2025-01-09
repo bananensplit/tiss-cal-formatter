@@ -24,7 +24,7 @@ def get_room_data(room_name=None):
             return [
                 room[0],  # Room Name
                 room[8],  # Tiss Link
-                f"https://tuw-maps.tuwien.ac.at/?q={room[7]}#map",  # TU Wien Maps Link
+                f"https://maps.tuwien.ac.at/?q={room[7]}#map",  # TU Wien Maps Link
                 room[6].split(",")[0],  # Real World Location
             ]
     else:
